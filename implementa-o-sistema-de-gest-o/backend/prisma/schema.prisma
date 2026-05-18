@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  passwordHash    String
+  createdAt       DateTime         @default(now())
+  memberships     Membership[]
+  taskAssignments TaskAssignment[]
+}
+
+model Company {
+  id          String       @id @default(uuid())
+  name        String
+  logoUrl     String?
+  createdAt   DateTime     @default(now())
+  projects    Project[]
+  memberships Membership[]
+}
+
+model Membership {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+  role      String   @default("member")
+
+  @@unique([userId, companyId])
+}
+
+model Project {
+  id           String        @id @default(uuid())
+  name         String
+  description  String?
+  status       String        @default("active")
+  color        String?
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId    String
+  createdAt    DateTime      @default(now())
+  subprojects  Subproject[]
+  customFields CustomField[]
+}
+
+model Subproject {
+  id        String   @id @default(uuid())
+  name      String
+  order     Int      @default(0)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  stages    Stage[]
+}
+
+model Stage {
+  id           String      @id @default(uuid())
+  name         String
+  order        Int         @default(0)
+  color        String?
+  subproject   Subproject  @relation(fields: [subprojectId], references: [id], onDelete: Cascade)
+  subprojectId String
+  items        Item[]
+}
+
+model Item {
+  id          String           @id @default(uuid())
+  name        String
+  order       Int              @default(0)
+  parentId    String?
+  parent      Item?            @relation("ItemHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Item[]           @relation("ItemHierarchy")
+  stage       Stage            @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  stageId     String
+  fieldValues FieldValue[]
+  attachments Attachment[]
+  lists       ItemList[]
+  assignments TaskAssignment[]
+  createdAt   DateTime         @default(now())
+}
+
+model TaskAssignment {
+  id     String @id @default(uuid())
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+}
+
+model CustomField {
+  id          String       @id @default(uuid())
+  name        String
+  type        String
+  options     String?
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  fieldValues FieldValue[]
+}
+
+model FieldValue {
+  id      String      @id @default(uuid())
+  field   CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  fieldId String
+  item    Item        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId  String
+  value   String?
+
+  @@unique([fieldId, itemId])
+}
+
+model ItemList {
+  id      String      @id @default(uuid())
+  title   String
+  itemId  String
+  item    Item        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  entries ListEntry[]
+}
+
+model ListEntry {
+  id     String   @id @default(uuid())
+  text   String
+  done   Boolean  @default(false)
+  order  Int      @default(0)
+  list   ItemList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  listId String
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  fileName  String
+  fileUrl   String
+  fileSize  Int?
+  mimeType  String?
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId    String
+  createdAt DateTime @default(now())
+}
