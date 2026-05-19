@@ -1,0 +1,204 @@
+import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+import { Header } from "../components/layout/Header";
+import { PageWrapper } from "../components/layout/PageWrapper";
+import { StageColumn } from "../components/project/StageColumn";
+import { SubprojectPanel } from "../components/project/SubprojectPanel";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { Modal } from "../components/ui/Modal";
+import { useProjects, useSubprojects } from "../hooks/useProjects";
+import { projectService } from "../services/projects";
+
+export default function ProjectView() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: allProjects = [] } = useProjects();
+  const project = allProjects.find((entry) => entry.id === id);
+  const { data: subprojects = [] } = useSubprojects(id);
+  const [activeSubprojectId, setActiveSubprojectId] = useState<string | undefined>(undefined);
+  const [subprojectName, setSubprojectName] = useState("");
+  const [openSubprojectModal, setOpenSubprojectModal] = useState(false);
+  const [openStageModal, setOpenStageModal] = useState(false);
+  const [stageName, setStageName] = useState("");
+  const [stageSubprojectId, setStageSubprojectId] = useState<string>("");
+  const [openFieldModal, setOpenFieldModal] = useState(false);
+  const [fieldName, setFieldName] = useState("");
+  const [fieldType, setFieldType] = useState("text");
+  const [fieldOptions, setFieldOptions] = useState("");
+
+  const activeSubproject = useMemo(() => {
+    const fallback = subprojects[0];
+    return subprojects.find((entry) => entry.id === activeSubprojectId) || fallback;
+  }, [activeSubprojectId, subprojects]);
+
+  const createSubproject = useMutation({
+    mutationFn: () => projectService.createSubproject(id!, { name: subprojectName }),
+    onSuccess: async () => {
+      setOpenSubprojectModal(false);
+      setSubprojectName("");
+      await queryClient.invalidateQueries({ queryKey: ["subprojects", id] });
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+
+  const createStage = useMutation({
+    mutationFn: () => projectService.createStage(stageSubprojectId, { name: stageName }),
+    onSuccess: async () => {
+      setOpenStageModal(false);
+      setStageName("");
+      await queryClient.invalidateQueries({ queryKey: ["subprojects", id] });
+    },
+  });
+
+  const createItem = useMutation({
+    mutationFn: (stageId: string) => projectService.createItem(stageId, { name: "Novo item" }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["subprojects", id] });
+    },
+  });
+
+  const createField = useMutation({
+    mutationFn: () =>
+      projectService.createField(id!, {
+        name: fieldName,
+        type: fieldType,
+        options:
+          fieldType === "select"
+            ? fieldOptions
+                .split(",")
+                .map((option) => option.trim())
+                .filter(Boolean)
+            : undefined,
+      }),
+    onSuccess: async () => {
+      setOpenFieldModal(false);
+      setFieldName("");
+      setFieldType("text");
+      setFieldOptions("");
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+
+  return (
+    <PageWrapper>
+      <Header title={project?.name || "Projeto"} subtitle={project?.description || "Visao kanban por subprojeto"} />
+      <div className="flex h-[calc(100vh-121px)]">
+        <SubprojectPanel
+          subprojects={subprojects}
+          activeId={activeSubproject?.id}
+          onSelect={setActiveSubprojectId}
+          onCreate={() => setOpenSubprojectModal(true)}
+        />
+        <div className="flex-1 overflow-auto p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900">{activeSubproject?.name || "Sem subprojeto"}</h2>
+              <p className="text-sm text-slate-500">Etapas customizaveis, arranjo visual e fluxo rapido.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button className="bg-slate-900 hover:bg-slate-800" onClick={() => setOpenFieldModal(true)}>
+                Campos
+              </Button>
+              {activeSubproject ? (
+                <Button
+                  onClick={() => {
+                    setStageSubprojectId(activeSubproject.id);
+                    setOpenStageModal(true);
+                  }}
+                >
+                  Nova Etapa
+                </Button>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex gap-4 overflow-auto pb-6">
+            {activeSubproject?.stages.map((stage) => (
+              <StageColumn
+                key={stage.id}
+                stage={stage}
+                onAddItem={(stageId) => createItem.mutate(stageId)}
+                onOpenItem={(itemId) => {
+                  navigate(`/items/${itemId}`);
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <Modal
+        open={openSubprojectModal}
+        title="Novo subprojeto"
+        onClose={() => setOpenSubprojectModal(false)}
+      >
+        <div className="space-y-4">
+          <Input
+            placeholder="Nome do subprojeto"
+            value={subprojectName}
+            onChange={(event) => setSubprojectName(event.target.value)}
+          />
+          <Button className="w-full" onClick={() => createSubproject.mutate()} disabled={!subprojectName}>
+            Criar subprojeto
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal open={openStageModal} title="Nova etapa" onClose={() => setOpenStageModal(false)}>
+        <div className="space-y-4">
+          <Input
+            placeholder="Nome da etapa"
+            value={stageName}
+            onChange={(event) => setStageName(event.target.value)}
+          />
+          <Button className="w-full" onClick={() => createStage.mutate()} disabled={!stageName}>
+            Criar etapa
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal open={openFieldModal} title="Gerenciar campos customizados" onClose={() => setOpenFieldModal(false)}>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              placeholder="Nome do campo"
+              value={fieldName}
+              onChange={(event) => setFieldName(event.target.value)}
+            />
+            <select
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+              value={fieldType}
+              onChange={(event) => setFieldType(event.target.value)}
+            >
+              <option value="text">Texto</option>
+              <option value="number">Numero</option>
+              <option value="date">Data</option>
+              <option value="select">Selecao</option>
+              <option value="checkbox">Checkbox</option>
+              <option value="url">URL</option>
+            </select>
+          </div>
+          {fieldType === "select" ? (
+            <Input
+              placeholder="Opcoes separadas por virgula"
+              value={fieldOptions}
+              onChange={(event) => setFieldOptions(event.target.value)}
+            />
+          ) : null}
+          <div className="space-y-2">
+            {project?.customFields?.map((field) => (
+              <div key={field.id} className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                {field.name} <span className="text-slate-400">({field.type})</span>
+              </div>
+            ))}
+          </div>
+          <Button className="w-full" onClick={() => createField.mutate()} disabled={!fieldName}>
+            Salvar campo
+          </Button>
+        </div>
+      </Modal>
+    </PageWrapper>
+  );
+}
