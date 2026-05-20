@@ -2,15 +2,17 @@ import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { getItemWithAccess } from "../services/access";
 import { asyncHandler, HttpError } from "../utils/errors";
+import { getParamString } from "../utils/request";
 import { listSchema, listUpdateSchema } from "../utils/validation";
 
 export const createList = asyncHandler(async (req: Request, res: Response) => {
-  await getItemWithAccess(req.user!.memberships || [], req.params.id, "member");
+  const itemId = getParamString(req.params.id);
+  await getItemWithAccess(req.user!.memberships || [], itemId, "member");
   const data = listSchema.parse(req.body);
 
   const list = await prisma.itemList.create({
     data: {
-      itemId: req.params.id,
+      itemId,
       title: data.title,
       entries: {
         create:
@@ -28,8 +30,9 @@ export const createList = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const updateList = asyncHandler(async (req: Request, res: Response) => {
+  const listId = getParamString(req.params.id);
   const list = await prisma.itemList.findUnique({
-    where: { id: req.params.id },
+    where: { id: listId },
     include: { item: true },
   });
 
