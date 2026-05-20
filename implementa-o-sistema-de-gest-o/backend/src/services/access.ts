@@ -1,10 +1,13 @@
+import type { Membership } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { ensureCompanyRole } from "../middleware/permission";
 import { HttpError } from "../utils/errors";
 
+type MembershipScope = Pick<Membership, "id" | "userId" | "companyId" | "role">;
+
 export const getProjectWithAccess = async (
   userId: string,
-  memberships: { companyId: string; role: string }[],
+  memberships: MembershipScope[],
   projectId: string,
   minimumRole: "viewer" | "member" | "admin" = "viewer",
 ) => {
@@ -21,7 +24,7 @@ export const getProjectWithAccess = async (
 };
 
 export const getSubprojectWithAccess = async (
-  memberships: { companyId: string; role: string }[],
+  memberships: MembershipScope[],
   subprojectId: string,
   minimumRole: "viewer" | "member" | "admin" = "viewer",
 ) => {
@@ -39,7 +42,7 @@ export const getSubprojectWithAccess = async (
 };
 
 export const getStageWithAccess = async (
-  memberships: { companyId: string; role: string }[],
+  memberships: MembershipScope[],
   stageId: string,
   minimumRole: "viewer" | "member" | "admin" = "viewer",
 ) => {
@@ -61,7 +64,7 @@ export const getStageWithAccess = async (
 };
 
 export const getItemWithAccess = async (
-  memberships: { companyId: string; role: string }[],
+  memberships: MembershipScope[],
   itemId: string,
   minimumRole: "viewer" | "member" | "admin" = "viewer",
 ) => {
