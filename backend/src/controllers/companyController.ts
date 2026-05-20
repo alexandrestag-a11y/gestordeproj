@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { ensureCompanyRole } from "../middleware/permission";
 import { asyncHandler, HttpError } from "../utils/errors";
+import { getParamString } from "../utils/request";
 import { companySchema, membershipSchema } from "../utils/validation";
 
 export const listCompanies = asyncHandler(async (req: Request, res: Response) => {
@@ -56,7 +57,7 @@ export const createCompany = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const listMembers = asyncHandler(async (req: Request, res: Response) => {
-  const companyId = req.params.id;
+  const companyId = getParamString(req.params.id);
   ensureCompanyRole(req.user?.memberships, companyId, "viewer");
 
   const members = await prisma.membership.findMany({
@@ -76,7 +77,7 @@ export const listMembers = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const addMember = asyncHandler(async (req: Request, res: Response) => {
-  const companyId = req.params.id;
+  const companyId = getParamString(req.params.id);
   ensureCompanyRole(req.user?.memberships, companyId, "admin");
   const data = membershipSchema.parse(req.body);
 
