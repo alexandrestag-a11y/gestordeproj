@@ -1,9 +1,10 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { asyncHandler, HttpError } from "../utils/errors";
+import { getParamString } from "../utils/request";
 
 export const getUserProjects = asyncHandler(async (req: Request, res: Response) => {
-  const requestedUserId = req.params.id;
+  const requestedUserId = getParamString(req.params.id);
   if (requestedUserId !== req.user!.id) {
     const sharedMembership = await prisma.membership.findFirst({
       where: {
