@@ -2,20 +2,22 @@ import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { getProjectWithAccess, getSubprojectWithAccess } from "../services/access";
 import { asyncHandler } from "../utils/errors";
+import { getParamString } from "../utils/request";
 import { stageSchema, subprojectSchema } from "../utils/validation";
 
 export const createSubproject = asyncHandler(async (req: Request, res: Response) => {
+  const projectId = getParamString(req.params.id);
   await getProjectWithAccess(
     req.user!.id,
     req.user!.memberships || [],
-    req.params.id,
+    projectId,
     "member",
   );
   const data = subprojectSchema.parse(req.body);
 
   const subproject = await prisma.subproject.create({
     data: {
-      projectId: req.params.id,
+      projectId,
       name: data.name,
       order: data.order ?? 0,
     },
@@ -26,11 +28,12 @@ export const createSubproject = asyncHandler(async (req: Request, res: Response)
 });
 
 export const updateSubproject = asyncHandler(async (req: Request, res: Response) => {
-  await getSubprojectWithAccess(req.user!.memberships || [], req.params.id, "member");
+  const subprojectId = getParamString(req.params.id);
+  await getSubprojectWithAccess(req.user!.memberships || [], subprojectId, "member");
   const data = subprojectSchema.partial().parse(req.body);
 
   const subproject = await prisma.subproject.update({
-    where: { id: req.params.id },
+    where: { id: subprojectId },
     data,
   });
 
@@ -38,12 +41,13 @@ export const updateSubproject = asyncHandler(async (req: Request, res: Response)
 });
 
 export const createStage = asyncHandler(async (req: Request, res: Response) => {
-  await getSubprojectWithAccess(req.user!.memberships || [], req.params.id, "member");
+  const subprojectId = getParamString(req.params.id);
+  await getSubprojectWithAccess(req.user!.memberships || [], subprojectId, "member");
   const data = stageSchema.parse(req.body);
 
   const stage = await prisma.stage.create({
     data: {
-      subprojectId: req.params.id,
+      subprojectId,
       name: data.name,
       color: data.color,
       order: data.order ?? 0,
