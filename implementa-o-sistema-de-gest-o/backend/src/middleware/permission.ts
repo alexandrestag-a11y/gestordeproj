@@ -1,6 +1,8 @@
 import type { Membership } from "@prisma/client";
 import { HttpError } from "../utils/errors";
 
+type MembershipScope = Pick<Membership, "id" | "userId" | "companyId" | "role">;
+
 const roleRank: Record<string, number> = {
   viewer: 1,
   member: 2,
@@ -8,12 +10,12 @@ const roleRank: Record<string, number> = {
 };
 
 export const getMembership = (
-  memberships: Membership[] | undefined,
+  memberships: MembershipScope[] | undefined,
   companyId: string,
 ) => memberships?.find((membership) => membership.companyId === companyId);
 
 export const ensureCompanyRole = (
-  memberships: Membership[] | undefined,
+  memberships: MembershipScope[] | undefined,
   companyId: string,
   minimumRole: "viewer" | "member" | "admin" = "viewer",
 ) => {
