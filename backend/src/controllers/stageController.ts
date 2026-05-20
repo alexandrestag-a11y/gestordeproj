@@ -2,14 +2,16 @@ import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { getStageWithAccess } from "../services/access";
 import { asyncHandler } from "../utils/errors";
+import { getParamString } from "../utils/request";
 import { stageReorderSchema, stageSchema } from "../utils/validation";
 
 export const updateStage = asyncHandler(async (req: Request, res: Response) => {
-  await getStageWithAccess(req.user!.memberships || [], req.params.id, "member");
+  const stageId = getParamString(req.params.id);
+  await getStageWithAccess(req.user!.memberships || [], stageId, "member");
   const data = stageSchema.partial().parse(req.body);
 
   const stage = await prisma.stage.update({
-    where: { id: req.params.id },
+    where: { id: stageId },
     data,
   });
 
@@ -17,9 +19,10 @@ export const updateStage = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const reorderStages = asyncHandler(async (req: Request, res: Response) => {
+  const stageId = getParamString(req.params.id);
   const currentStage = await getStageWithAccess(
     req.user!.memberships || [],
-    req.params.id,
+    stageId,
     "member",
   );
   const { stageIds } = stageReorderSchema.parse(req.body);
