@@ -5,6 +5,7 @@ import { getParamString } from "../utils/request";
 
 export const getUserProjects = asyncHandler(async (req: Request, res: Response) => {
   const requestedUserId = getParamString(req.params.id);
+
   if (requestedUserId !== req.user!.id) {
     const sharedMembership = await prisma.membership.findFirst({
       where: {
