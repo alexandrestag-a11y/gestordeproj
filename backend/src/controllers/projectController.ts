@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 import { ensureCompanyRole } from "../middleware/permission";
 import { getProjectWithAccess } from "../services/access";
 import { asyncHandler } from "../utils/errors";
+import { getParamString } from "../utils/request";
 import { projectSchema } from "../utils/validation";
 
 export const listProjects = asyncHandler(async (req: Request, res: Response) => {
@@ -60,10 +61,11 @@ export const createProject = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const updateProject = asyncHandler(async (req: Request, res: Response) => {
+  const projectId = getParamString(req.params.id);
   const project = await getProjectWithAccess(
     req.user!.id,
     req.user!.memberships || [],
-    req.params.id,
+    projectId,
     "admin",
   );
   const data = projectSchema.partial().omit({ companyId: true }).parse(req.body);
@@ -77,10 +79,11 @@ export const updateProject = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export const deleteProject = asyncHandler(async (req: Request, res: Response) => {
+  const projectId = getParamString(req.params.id);
   const project = await getProjectWithAccess(
     req.user!.id,
     req.user!.memberships || [],
-    req.params.id,
+    projectId,
     "admin",
   );
 
@@ -90,10 +93,11 @@ export const deleteProject = asyncHandler(async (req: Request, res: Response) =>
 
 export const getProjectSubprojects = asyncHandler(
   async (req: Request, res: Response) => {
+    const projectId = getParamString(req.params.id);
     const project = await getProjectWithAccess(
       req.user!.id,
       req.user!.memberships || [],
-      req.params.id,
+      projectId,
       "viewer",
     );
 
