@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { getItemWithAccess, getStageWithAccess } from "../services/access";
 import { asyncHandler } from "../utils/errors";
+import { getParamString } from "../utils/request";
 import {
   itemMoveSchema,
   itemReorderSchema,
@@ -9,10 +10,11 @@ import {
 } from "../utils/validation";
 
 export const listItems = asyncHandler(async (req: Request, res: Response) => {
-  await getStageWithAccess(req.user!.memberships || [], req.params.id, "viewer");
+  const stageId = getParamString(req.params.id);
+  await getStageWithAccess(req.user!.memberships || [], stageId, "viewer");
 
   const items = await prisma.item.findMany({
-    where: { stageId: req.params.id, parentId: null },
+    where: { stageId, parentId: null },
     include: {
       children: {
         orderBy: { order: "asc" },
@@ -43,12 +45,13 @@ export const listItems = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const createItem = asyncHandler(async (req: Request, res: Response) => {
-  await getStageWithAccess(req.user!.memberships || [], req.params.id, "member");
+  const stageId = getParamString(req.params.id);
+  await getStageWithAccess(req.user!.memberships || [], stageId, "member");
   const data = itemSchema.parse(req.body);
 
   const item = await prisma.item.create({
     data: {
-      stageId: req.params.id,
+      stageId,
       name: data.name,
       order: data.order ?? 0,
       parentId: data.parentId ?? null,
@@ -59,11 +62,12 @@ export const createItem = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const updateItem = asyncHandler(async (req: Request, res: Response) => {
-  await getItemWithAccess(req.user!.memberships || [], req.params.id, "member");
+  const itemId = getParamString(req.params.id);
+  await getItemWithAccess(req.user!.memberships || [], itemId, "member");
   const data = itemSchema.partial().parse(req.body);
 
   const item = await prisma.item.update({
-    where: { id: req.params.id },
+    where: { id: itemId },
     data,
   });
 
@@ -71,12 +75,13 @@ export const updateItem = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const moveItem = asyncHandler(async (req: Request, res: Response) => {
-  await getItemWithAccess(req.user!.memberships || [], req.params.id, "member");
+  const itemId = getParamString(req.params.id);
+  await getItemWithAccess(req.user!.memberships || [], itemId, "member");
   const data = itemMoveSchema.parse(req.body);
   await getStageWithAccess(req.user!.memberships || [], data.stageId, "member");
 
   const item = await prisma.item.update({
-    where: { id: req.params.id },
+    where: { id: itemId },
     data: {
       stageId: data.stageId,
       order: data.order ?? 0,
@@ -88,11 +93,12 @@ export const moveItem = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const reorderItem = asyncHandler(async (req: Request, res: Response) => {
-  await getItemWithAccess(req.user!.memberships || [], req.params.id, "member");
+  const itemId = getParamString(req.params.id);
+  await getItemWithAccess(req.user!.memberships || [], itemId, "member");
   const data = itemReorderSchema.parse(req.body);
 
   const item = await prisma.item.update({
-    where: { id: req.params.id },
+    where: { id: itemId },
     data,
   });
 
@@ -100,9 +106,10 @@ export const reorderItem = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const createChildItem = asyncHandler(async (req: Request, res: Response) => {
+  const itemId = getParamString(req.params.id);
   const parent = await getItemWithAccess(
     req.user!.memberships || [],
-    req.params.id,
+    itemId,
     "member",
   );
   const data = itemSchema.parse(req.body);
@@ -120,10 +127,11 @@ export const createChildItem = asyncHandler(async (req: Request, res: Response) 
 });
 
 export const getItemDetail = asyncHandler(async (req: Request, res: Response) => {
-  await getItemWithAccess(req.user!.memberships || [], req.params.id, "viewer");
+  const itemId = getParamString(req.params.id);
+  await getItemWithAccess(req.user!.memberships || [], itemId, "viewer");
 
   const item = await prisma.item.findUnique({
-    where: { id: req.params.id },
+    where: { id: itemId },
     include: {
       children: {
         include: {
