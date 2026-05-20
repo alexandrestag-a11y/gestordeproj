@@ -5,9 +5,11 @@ import { prisma } from "../lib/prisma";
 import { config } from "../config";
 import { getItemWithAccess } from "../services/access";
 import { asyncHandler, HttpError } from "../utils/errors";
+import { getParamString } from "../utils/request";
 
 export const createAttachment = asyncHandler(async (req: Request, res: Response) => {
-  await getItemWithAccess(req.user!.memberships || [], req.params.id, "member");
+  const itemId = getParamString(req.params.id);
+  await getItemWithAccess(req.user!.memberships || [], itemId, "member");
 
   if (!req.file) {
     throw new HttpError(400, "File is required");
@@ -15,7 +17,7 @@ export const createAttachment = asyncHandler(async (req: Request, res: Response)
 
   const attachment = await prisma.attachment.create({
     data: {
-      itemId: req.params.id,
+      itemId,
       fileName: req.file.originalname,
       fileUrl: `/uploads/${req.file.filename}`,
       fileSize: req.file.size,
@@ -27,8 +29,9 @@ export const createAttachment = asyncHandler(async (req: Request, res: Response)
 });
 
 export const deleteAttachment = asyncHandler(async (req: Request, res: Response) => {
+  const attachmentId = getParamString(req.params.id);
   const attachment = await prisma.attachment.findUnique({
-    where: { id: req.params.id },
+    where: { id: attachmentId },
     include: { item: true },
   });
 
