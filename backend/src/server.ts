@@ -44,6 +44,10 @@ app.use("/api/users", requireAuth, userRoutes);
 
 app.use(errorHandler);
 
-app.listen(config.port, () => {
-  console.log(`API running on http://localhost:${config.port}`);
-});
+if (require.main === module) {
+  app.listen(config.port, () => {
+    console.log(`API running on http://localhost:${config.port}`);
+  });
+}
+
+export default app;
