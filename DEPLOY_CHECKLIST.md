@@ -1,8 +1,20 @@
 # Checklist de Verificação de Deploy
 
-Se você está recebendo erro 500 ao criar um usuário, siga estes passos na ordem:
+Este guia ajuda a garantir que o Frontend, Backend e Banco de Dados estejam conversando corretamente.
 
-## 1. Verifique a Conexão com o Banco de Dados
+## 0. Regra de Ouro: Arquivos .env
+- **Localmente**: Você usa o arquivo `.env` (criado a partir do `.env.example`).
+- **Na Vercel/Render**: Você **NÃO** usa arquivos `.env`. Você deve preencher as variáveis manualmente nos painéis de controle (**Settings > Environment Variables**). O arquivo `.env` no seu computador não é enviado para o GitHub por segurança.
+
+## 1. Checklist de Conexões (Resumo)
+
+| De onde | Para onde | Variável na Vercel/Render | Valor Exemplo |
+| :--- | :--- | :--- | :--- |
+| **Frontend** (Vercel) | **Backend** (Render) | `VITE_API_URL` | `https://api.onrender.com/api` |
+| **Backend** (Render) | **Banco** (Neon) | `DATABASE_URL` | `postgresql://user:pass@host/db` |
+| **Backend** (Render) | **Frontend** (Vercel) | `FRONTEND_URL` | `*` (ou sua URL da Vercel) |
+
+## 2. Verifique a Conexão com o Banco de Dados
 Acesse a URL do seu backend no navegador adicionando `/health` no final.
 - **URL**: `https://gestordeproj.onrender.com/health`
 - **O que esperar**: `{"status": "ok", "database": "connected"}`
@@ -34,3 +46,8 @@ No Render, em **Settings > Environment Variables**, confirme se estas 3 existem:
 ## 5. Variáveis de Ambiente Necessárias (Frontend)
 Na Vercel, em **Settings > Environment Variables**:
 - `VITE_API_URL`: Deve ser `https://gestordeproj.onrender.com/api` (Precisa do `/api` no final).
+
+## 6. Por que o Deploy falhou?
+Se o GitHub/Vercel mostrar um erro de build (vermelho), verifique:
+1. **Pull Requests**: Certifique-se de que você aceitou e fez o **Merge** de todas as correções que enviei para o seu GitHub.
+2. **Typescript**: Se o erro for `Property 'env' does not exist on type 'ImportMeta'`, a correção está na branch `fix-vercel-deploy-final-types` que enviei por último.
