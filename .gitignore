@@ -10,3 +10,10 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 backend/prisma/dev.db
 backend/prisma/dev.db-journal
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Vite build artifacts in source
+frontend/vite.config.js
+frontend/vite.config.d.ts

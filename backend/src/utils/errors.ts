@@ -20,8 +20,11 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction,
 ) => {
+  console.error("Error caught by errorHandler:", error);
+
   const status = error.status || 500;
   res.status(status).json({
     message: error.message || "Internal server error",
+    error: process.env.NODE_ENV !== "production" ? error : undefined,
   });
 };

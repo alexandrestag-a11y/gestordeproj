@@ -20,15 +20,20 @@ const uploadDir = path.join(process.cwd(), config.uploadDir);
 
 app.use(
   cors({
-    origin: config.frontendUrl,
+    origin: true, // Dynamically allow any origin and reflect it in the header
     credentials: true,
   }),
 );
 app.use(express.json());
 app.use("/uploads", express.static(uploadDir));
 
-app.get("/health", (_req, res) => {
-  res.json({ ok: true });
+app.get("/health", async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: "ok", database: "connected" });
+  } catch (error) {
+    res.status(500).json({ status: "error", database: "disconnected", error: String(error) });
+  }
 });
 
 app.use("/api/auth", authRoutes);
@@ -44,6 +49,10 @@ app.use("/api/users", requireAuth, userRoutes);
 
 app.use(errorHandler);
 
-app.listen(config.port, () => {
-  console.log(`API running on http://localhost:${config.port}`);
-});
+if (require.main === module) {
+  app.listen(config.port, () => {
+    console.log(`API running on http://localhost:${config.port}`);
+  });
+}
+
+export default app;
