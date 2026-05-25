@@ -20,24 +20,7 @@ const uploadDir = path.join(process.cwd(), config.uploadDir);
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl)
-      if (!origin) return callback(null, true);
-
-      const allowedOrigins = [config.frontendUrl];
-
-      if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
-        callback(null, true);
-      } else {
-        // In production, also allow vercel preview URLs if needed,
-        // or just allow all if config.frontendUrl is "*"
-        if (config.frontendUrl === "*" || origin.endsWith(".vercel.app")) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
-      }
-    },
+    origin: true, // Dynamically allow any origin and reflect it in the header
     credentials: true,
   }),
 );
