@@ -27,8 +27,13 @@ app.use(
 app.use(express.json());
 app.use("/uploads", express.static(uploadDir));
 
-app.get("/health", (_req, res) => {
-  res.json({ ok: true });
+app.get("/health", async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: "ok", database: "connected" });
+  } catch (error) {
+    res.status(500).json({ status: "error", database: "disconnected", error: String(error) });
+  }
 });
 
 app.use("/api/auth", authRoutes);
