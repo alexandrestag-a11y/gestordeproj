@@ -14,13 +14,28 @@ export const listProjects = asyncHandler(async (req: Request, res: Response) => 
 
   const projects = await prisma.project.findMany({
     where: companyId
-      ? { companyId }
+      ? {
+          OR: [
+            { companyId },
+            { shares: { some: { userId: req.user!.id } } }
+          ],
+          companyId // Filter by company if provided, but still check access
+        }
       : {
-          company: {
-            memberships: {
-              some: { userId: req.user!.id },
+          OR: [
+            {
+              company: {
+                memberships: {
+                  some: { userId: req.user!.id },
+                },
+              },
             },
-          },
+            {
+              shares: {
+                some: { userId: req.user!.id },
+              },
+            },
+          ],
         },
     include: {
       company: true,

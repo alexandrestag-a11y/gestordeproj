@@ -13,6 +13,7 @@ import fieldRoutes from "./routes/fields";
 import attachmentRoutes from "./routes/attachments";
 import listRoutes from "./routes/lists";
 import userRoutes from "./routes/users";
+import folderRoutes from "./routes/folders";
 import path from "node:path";
 import { prisma } from "./lib/prisma";
 
@@ -47,6 +48,7 @@ app.use("/api/fields", requireAuth, fieldRoutes);
 app.use("/api/attachments", requireAuth, attachmentRoutes);
 app.use("/api/lists", requireAuth, listRoutes);
 app.use("/api/users", requireAuth, userRoutes);
+app.use("/api/folders", requireAuth, folderRoutes);
 
 app.use(errorHandler);
 

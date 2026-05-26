@@ -1,4 +1,4 @@
-import type { Company, CustomField, Item, Project, Subproject } from "../types";
+import type { Company, CustomField, Folder, Item, Project, ProjectShare, Subproject } from "../types";
 import { api } from "./api";
 
 export const projectService = {
@@ -19,6 +19,32 @@ export const projectService = {
   createProject: async (payload: Partial<Project> & { companyId: string; name: string }) => {
     const { data } = await api.post<Project>("/projects", payload);
     return data;
+  },
+  getFolders: async (companyId: string) => {
+    const { data } = await api.get<Folder[]>("/folders", { params: { companyId } });
+    return data;
+  },
+  createFolder: async (payload: { name: string; companyId: string; parentId?: string | null }) => {
+    const { data } = await api.post<Folder>("/folders", payload);
+    return data;
+  },
+  updateFolder: async (id: string, payload: { name: string }) => {
+    const { data } = await api.put<Folder>(`/folders/${id}`, payload);
+    return data;
+  },
+  deleteFolder: async (id: string) => {
+    await api.delete(`/folders/${id}`);
+  },
+  shareProject: async (projectId: string, payload: { email: string; role: string }) => {
+    const { data } = await api.post(`/projects/${projectId}/shares`, payload);
+    return data;
+  },
+  getProjectShares: async (projectId: string) => {
+    const { data } = await api.get<ProjectShare[]>(`/projects/${projectId}/shares`);
+    return data;
+  },
+  removeProjectShare: async (projectId: string, userId: string) => {
+    await api.delete(`/projects/${projectId}/shares/${userId}`);
   },
   updateProject: async (id: string, payload: Partial<Project>) => {
     const { data } = await api.put<Project>(`/projects/${id}`, payload);

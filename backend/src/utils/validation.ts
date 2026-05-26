@@ -26,9 +26,22 @@ export const membershipSchema = z.object({
 export const projectSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
+  content: z.string().optional(),
   status: z.string().optional(),
   color: z.string().optional(),
   companyId: z.string().uuid(),
+  folderId: z.string().uuid().nullable().optional(),
+});
+
+export const folderSchema = z.object({
+  name: z.string().min(1),
+  companyId: z.string().uuid(),
+  parentId: z.string().uuid().nullable().optional(),
+});
+
+export const projectShareSchema = z.object({
+  email: z.string().email(),
+  role: z.enum(["viewer", "editor"]).default("viewer"),
 });
 
 export const subprojectSchema = z.object({

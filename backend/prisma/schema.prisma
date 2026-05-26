@@ -15,6 +15,7 @@ model User {
   createdAt       DateTime         @default(now())
   memberships     Membership[]
   taskAssignments TaskAssignment[]
+  projectShares   ProjectShare[]
 }
 
 model Company {
@@ -23,7 +24,20 @@ model Company {
   logoUrl     String?
   createdAt   DateTime     @default(now())
   projects    Project[]
+  folders     Folder[]
   memberships Membership[]
+}
+
+model Folder {
+  id             String    @id @default(uuid())
+  name           String
+  company        Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId      String
+  parentId       String?
+  parentFolder   Folder?   @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  subfolders     Folder[]  @relation("FolderHierarchy")
+  projects       Project[]
+  createdAt      DateTime  @default(now())
 }
 
 model Membership {
@@ -38,16 +52,32 @@ model Membership {
 }
 
 model Project {
-  id           String        @id @default(uuid())
+  id           String         @id @default(uuid())
   name         String
   description  String?
-  status       String        @default("active")
+  content      String?        @db.Text
+  status       String         @default("active")
   color        String?
-  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId    String
-  createdAt    DateTime      @default(now())
+  folderId     String?
+  folder       Folder?        @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  createdAt    DateTime       @default(now())
   subprojects  Subproject[]
   customFields CustomField[]
+  shares       ProjectShare[]
+}
+
+model ProjectShare {
+  id        String   @id @default(uuid())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      String   @default("viewer") // viewer, editor
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, userId])
 }
 
 model Subproject {

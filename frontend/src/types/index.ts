@@ -22,6 +22,26 @@ export type Company = {
   createdAt: string;
   memberships: Membership[];
   projects: Project[];
+  folders: Folder[];
+};
+
+export type Folder = {
+  id: string;
+  name: string;
+  companyId: string;
+  parentId?: string | null;
+  subfolders: Folder[];
+  projects: Project[];
+  createdAt: string;
+};
+
+export type ProjectShare = {
+  id: string;
+  projectId: string;
+  userId: string;
+  user: User;
+  role: "viewer" | "editor";
+  createdAt: string;
 };
 
 export type ProjectSummary = {
@@ -34,13 +54,16 @@ export type Project = {
   id: string;
   name: string;
   description?: string | null;
+  content?: string | null;
   status: string;
   color?: string | null;
   companyId: string;
   company?: Company;
+  folderId?: string | null;
   createdAt: string;
   subprojects: Subproject[];
   customFields?: CustomField[];
+  shares?: ProjectShare[];
 };
 
 export type Subproject = {
