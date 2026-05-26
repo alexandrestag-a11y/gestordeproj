@@ -19,3 +19,10 @@ export const useSubprojects = (projectId?: string) =>
     queryFn: () => projectService.getSubprojects(projectId!),
     enabled: Boolean(projectId),
   });
+
+export const useFolders = (companyId?: string) =>
+  useQuery({
+    queryKey: ["folders", companyId],
+    queryFn: () => projectService.getFolders(companyId!),
+    enabled: Boolean(companyId),
+  });
