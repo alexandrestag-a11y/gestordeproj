@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 import { Header } from "../components/layout/Header";
 import { PageWrapper } from "../components/layout/PageWrapper";
 import { StageColumn } from "../components/project/StageColumn";
@@ -28,6 +30,17 @@ export default function ProjectView() {
   const [fieldName, setFieldName] = useState("");
   const [fieldType, setFieldType] = useState("text");
   const [fieldOptions, setFieldOptions] = useState("");
+  const [content, setContent] = useState("");
+  const [isSavingContent, setIsSavingContent] = useState(false);
+
+  useEffect(() => {
+    if (project?.content) {
+      setContent(project.content);
+    }
+  }, [project?.content]);
+  const [openShareModal, setOpenShareModal] = useState(false);
+  const [shareEmail, setShareEmail] = useState("");
+  const [shareRole, setShareRole] = useState("viewer");
 
   const activeSubproject = useMemo(() => {
     const fallback = subprojects[0];
@@ -82,6 +95,26 @@ export default function ProjectView() {
     },
   });
 
+  const saveContent = async () => {
+    if (!id) return;
+    setIsSavingContent(true);
+    try {
+      await projectService.updateProject(id, { content });
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+    } finally {
+      setIsSavingContent(false);
+    }
+  };
+
+  const shareProject = useMutation({
+    mutationFn: () => projectService.shareProject(id!, { email: shareEmail, role: shareRole }),
+    onSuccess: async () => {
+      setOpenShareModal(false);
+      setShareEmail("");
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+
   return (
     <PageWrapper>
       <Header title={project?.name || "Projeto"} subtitle={project?.description || "Visao kanban por subprojeto"} />
@@ -99,6 +132,12 @@ export default function ProjectView() {
               <p className="text-sm text-slate-500">Etapas customizaveis, arranjo visual e fluxo rapido.</p>
             </div>
             <div className="flex items-center gap-3">
+              <Button
+                className="bg-slate-100 text-slate-900 hover:bg-slate-200"
+                onClick={() => setOpenShareModal(true)}
+              >
+                Compartilhar
+              </Button>
               <Button className="bg-slate-900 hover:bg-slate-800" onClick={() => setOpenFieldModal(true)}>
                 Campos
               </Button>
@@ -125,6 +164,16 @@ export default function ProjectView() {
                 }}
               />
             ))}
+          </div>
+
+          <div className="mt-8 rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">Documentacao do Projeto</h3>
+              <Button onClick={saveContent} disabled={isSavingContent}>
+                {isSavingContent ? "Salvando..." : "Salvar Texto"}
+              </Button>
+            </div>
+            <ReactQuill theme="snow" value={content} onChange={setContent} />
           </div>
         </div>
       </div>
@@ -196,6 +245,27 @@ export default function ProjectView() {
           </div>
           <Button className="w-full" onClick={() => createField.mutate()} disabled={!fieldName}>
             Salvar campo
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal open={openShareModal} title="Compartilhar Projeto" onClose={() => setOpenShareModal(false)}>
+        <div className="space-y-4">
+          <Input
+            placeholder="E-mail do usuario"
+            value={shareEmail}
+            onChange={(event) => setShareEmail(event.target.value)}
+          />
+          <select
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+            value={shareRole}
+            onChange={(event) => setShareRole(event.target.value)}
+          >
+            <option value="viewer">Visualizador</option>
+            <option value="editor">Editor</option>
+          </select>
+          <Button className="w-full" onClick={() => shareProject.mutate()} disabled={!shareEmail}>
+            Convidar
           </Button>
         </div>
       </Modal>
