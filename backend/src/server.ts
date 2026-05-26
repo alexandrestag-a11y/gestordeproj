@@ -14,6 +14,7 @@ import attachmentRoutes from "./routes/attachments";
 import listRoutes from "./routes/lists";
 import userRoutes from "./routes/users";
 import path from "node:path";
+import { prisma } from "./lib/prisma";
 
 const app = express();
 const uploadDir = path.join(process.cwd(), config.uploadDir);
