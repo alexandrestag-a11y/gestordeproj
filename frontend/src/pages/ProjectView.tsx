@@ -66,9 +66,15 @@ export default function ProjectView() {
     },
   });
 
+  const [openItemModal, setOpenItemModal] = useState(false);
+  const [itemName, setItemName] = useState("");
+  const [targetStageId, setTargetStageId] = useState("");
+
   const createItem = useMutation({
-    mutationFn: (stageId: string) => projectService.createItem(stageId, { name: "Novo item" }),
+    mutationFn: () => projectService.createItem(targetStageId, { name: itemName }),
     onSuccess: async () => {
+      setOpenItemModal(false);
+      setItemName("");
       await queryClient.invalidateQueries({ queryKey: ["subprojects", id] });
     },
   });
@@ -142,14 +148,17 @@ export default function ProjectView() {
                 Campos
               </Button>
               {activeSubproject ? (
-                <Button
-                  onClick={() => {
-                    setStageSubprojectId(activeSubproject.id);
-                    setOpenStageModal(true);
-                  }}
-                >
-                  Nova Etapa
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => {
+                      setStageSubprojectId(activeSubproject.id);
+                      setOpenStageModal(true);
+                    }}
+                  >
+                    Nova Etapa
+                  </Button>
+                </div>
               ) : null}
             </div>
           </div>
@@ -158,7 +167,10 @@ export default function ProjectView() {
               <StageColumn
                 key={stage.id}
                 stage={stage}
-                onAddItem={(stageId) => createItem.mutate(stageId)}
+                onAddItem={(stageId) => {
+                  setTargetStageId(stageId);
+                  setOpenItemModal(true);
+                }}
                 onOpenItem={(itemId) => {
                   navigate(`/items/${itemId}`);
                 }}
@@ -245,6 +257,23 @@ export default function ProjectView() {
           </div>
           <Button className="w-full" onClick={() => createField.mutate()} disabled={!fieldName}>
             Salvar campo
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal open={openItemModal} title="Novo Item" onClose={() => setOpenItemModal(false)}>
+        <div className="space-y-4">
+          <Input
+            placeholder="Nome do item"
+            value={itemName}
+            onChange={(event) => setItemName(event.target.value)}
+          />
+          <Button
+            className="w-full"
+            onClick={() => createItem.mutate()}
+            disabled={!itemName || createItem.isPending}
+          >
+            {createItem.isPending ? "Criando..." : "Criar Item"}
           </Button>
         </div>
       </Modal>

@@ -126,7 +126,9 @@ export const getProjectSubprojects = asyncHandler(
                 children: {
                   orderBy: { order: "asc" },
                 },
-                fieldValues: true,
+                fieldValues: {
+                  include: { field: true }
+                },
                 attachments: true,
                 lists: {
                   include: { entries: { orderBy: { order: "asc" } } },

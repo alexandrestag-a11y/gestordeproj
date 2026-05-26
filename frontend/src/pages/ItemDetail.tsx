@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { FileUpload } from "../components/item/FileUpload";
@@ -9,6 +10,7 @@ import { PageWrapper } from "../components/layout/PageWrapper";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
+import { Modal } from "../components/ui/Modal";
 import { useItem } from "../hooks/useItems";
 import { projectService } from "../services/projects";
 
@@ -50,9 +52,14 @@ export default function ItemDetailPage() {
     },
   });
 
+  const [openSubtaskModal, setOpenSubtaskModal] = useState(false);
+  const [subtaskName, setSubtaskName] = useState("");
+
   const createChild = useMutation({
-    mutationFn: () => projectService.createChildItem(id!, { name: "Nova subtarefa" }),
+    mutationFn: () => projectService.createChildItem(id!, { name: subtaskName }),
     onSuccess: async () => {
+      setOpenSubtaskModal(false);
+      setSubtaskName("");
       await queryClient.invalidateQueries({ queryKey: ["item", id] });
     },
   });
@@ -107,7 +114,7 @@ export default function ItemDetailPage() {
           <Card className="space-y-4 p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Subtarefas</h3>
-              <Button onClick={() => createChild.mutate()}>
+              <Button onClick={() => setOpenSubtaskModal(true)}>
                 Adicionar subtarefa
               </Button>
             </div>
@@ -140,6 +147,23 @@ export default function ItemDetailPage() {
           </Card>
         </div>
       </div>
+
+      <Modal open={openSubtaskModal} title="Nova Subtarefa" onClose={() => setOpenSubtaskModal(false)}>
+        <div className="space-y-4">
+          <Input
+            placeholder="Nome da subtarefa"
+            value={subtaskName}
+            onChange={(event) => setSubtaskName(event.target.value)}
+          />
+          <Button
+            className="w-full"
+            onClick={() => createChild.mutate()}
+            disabled={!subtaskName || createChild.isPending}
+          >
+            {createChild.isPending ? "Criando..." : "Criar Subtarefa"}
+          </Button>
+        </div>
+      </Modal>
     </PageWrapper>
   );
 }
