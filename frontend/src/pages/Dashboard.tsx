@@ -15,7 +15,9 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [open, setOpen] = useState(false);
+  const [openCompany, setOpenCompany] = useState(false);
   const [projectName, setProjectName] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const { data: companies = [] } = useCompanies();
   const { data: projects = [], isLoading } = useProjects(companyId || undefined);
 
@@ -34,6 +36,15 @@ export default function Dashboard() {
     },
   });
 
+  const createCompany = useMutation({
+    mutationFn: () => projectService.createCompany({ name: companyName }),
+    onSuccess: async () => {
+      setOpenCompany(false);
+      setCompanyName("");
+      await queryClient.invalidateQueries({ queryKey: ["companies"] });
+    },
+  });
+
   return (
     <PageWrapper>
       <Header
@@ -44,7 +55,12 @@ export default function Dashboard() {
       />
       <div className="space-y-6 p-8">
         <div className="flex items-center justify-between">
-          <CompanyFilter companies={companies} value={companyId} onChange={setCompanyId} />
+          <div className="flex items-center gap-3">
+            <CompanyFilter companies={companies} value={companyId} onChange={setCompanyId} />
+            <Button className="bg-slate-200 text-slate-800 hover:bg-slate-300" onClick={() => setOpenCompany(true)}>
+              Nova Empresa
+            </Button>
+          </div>
           <Button onClick={() => setOpen(true)} disabled={!companyId}>
             Novo Projeto
           </Button>
@@ -67,6 +83,19 @@ export default function Dashboard() {
             onChange={(event) => setProjectName(event.target.value)}
           />
           <Button className="w-full" onClick={() => createProject.mutate()} disabled={!projectName || !companyId}>
+            Salvar
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal open={openCompany} title="Criar nova empresa" onClose={() => setOpenCompany(false)}>
+        <div className="space-y-4">
+          <Input
+            placeholder="Nome da empresa"
+            value={companyName}
+            onChange={(event) => setCompanyName(event.target.value)}
+          />
+          <Button className="w-full" onClick={() => createCompany.mutate()} disabled={!companyName}>
             Salvar
           </Button>
         </div>
