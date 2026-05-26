@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Folder as FolderIcon, MoreVertical } from "lucide-react";
+import { ChevronRight, Folder as FolderIcon, ListTree, MoreVertical } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { PageWrapper } from "../components/layout/PageWrapper";
 import { CompanyFilter } from "../components/dashboard/CompanyFilter";
 import { ProjectCard } from "../components/dashboard/ProjectCard";
+import { FolderTree } from "../components/common/FolderTree";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [companyName, setCompanyName] = useState("");
   const [folderName, setFolderName] = useState("");
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "tree">("grid");
 
   const { data: companies = [] } = useCompanies();
   const { data: projects = [], isLoading } = useProjects(companyId || undefined);
@@ -126,12 +128,32 @@ export default function Dashboard() {
               </Button>
             )}
           </div>
-          <Button onClick={() => setOpen(true)} disabled={!companyId}>
-            Novo Projeto
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="mr-2 flex items-center rounded-xl bg-slate-100 p-1">
+              <button
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                  viewMode === "grid" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                }`}
+                onClick={() => setViewMode("grid")}
+              >
+                Grade
+              </button>
+              <button
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                  viewMode === "tree" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                }`}
+                onClick={() => setViewMode("tree")}
+              >
+                Arvore
+              </button>
+            </div>
+            <Button onClick={() => setOpen(true)} disabled={!companyId}>
+              Novo Projeto
+            </Button>
+          </div>
         </div>
 
-        {companyId && (
+        {companyId && viewMode === "grid" && (
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <button
               className="hover:text-blue-600"
@@ -153,7 +175,30 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-5">
+        <div className={viewMode === "grid" ? "grid grid-cols-3 gap-5" : "space-y-4"}>
+          {viewMode === "tree" ? (
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-6 flex items-center gap-2 text-slate-900">
+                <ListTree className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold">Estrutura de Pastas e Projetos</h3>
+              </div>
+              <FolderTree
+                folders={folders}
+                projects={projects}
+                onNavigate={(id) => {
+                  setActiveFolderId(id);
+                  setViewMode("grid");
+                }}
+                activeFolderId={activeFolderId}
+              />
+              {folders.length === 0 && projects.length === 0 && (
+                <div className="py-12 text-center text-slate-400">
+                  Nenhuma pasta ou projeto encontrado.
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
           {currentFolders.map((folder) => (
             <div
               key={folder.id}
@@ -175,6 +220,8 @@ export default function Dashboard() {
                 <div key={index} className="h-48 animate-pulse rounded-2xl bg-white/70" />
               ))
             : filteredProjects.map((project) => <ProjectCard key={project.id} project={project} />)}
+            </>
+          )}
         </div>
       </div>
 
