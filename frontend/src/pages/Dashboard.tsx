@@ -272,6 +272,17 @@ export default function Dashboard() {
                   setActiveFolderId(id);
                   setViewMode("grid");
                 }}
+                onEditFolder={(folder) => {
+                  setFolderName(folder.name);
+                  setEditingId(folder.id);
+                  setEditMode("folder");
+                  setOpenFolder(true);
+                }}
+                onDeleteFolder={(id) => {
+                  if (confirm("Deseja realmente excluir esta pasta e todo o seu conteúdo?")) {
+                    deleteFolder.mutate(id);
+                  }
+                }}
                 activeFolderId={activeFolderId}
               />
               {folders.length === 0 && projects.length === 0 && (

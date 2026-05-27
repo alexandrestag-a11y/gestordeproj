@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Folder as FolderIcon, MoreVertical } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder as FolderIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { Folder, Project } from "../../types";
 import { ProjectCard } from "../dashboard/ProjectCard";
@@ -8,6 +8,8 @@ interface FolderTreeProps {
   projects: Project[];
   level?: number;
   onNavigate: (folderId: string | null) => void;
+  onEditFolder?: (folder: Folder) => void;
+  onDeleteFolder?: (id: string) => void;
   activeFolderId: string | null;
 }
 
@@ -16,6 +18,8 @@ export const FolderTree = ({
   projects,
   level = 0,
   onNavigate,
+  onEditFolder,
+  onDeleteFolder,
   activeFolderId,
 }: FolderTreeProps) => {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -50,7 +54,26 @@ export const FolderTree = ({
               <FolderIcon className={`h-4 w-4 ${activeFolderId === folder.id ? "text-blue-600" : "text-slate-400"}`} />
               <span className="text-sm font-medium">{folder.name}</span>
             </div>
-            <MoreVertical className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100" />
+            <div className="flex gap-1">
+              <button
+                className="p-1 hover:text-blue-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditFolder?.(folder);
+                }}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              <button
+                className="p-1 hover:text-red-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteFolder?.(folder.id);
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
 
           {expanded[folder.id] && (
@@ -60,6 +83,8 @@ export const FolderTree = ({
                 projects={projects.filter((p) => p.folderId === folder.id)}
                 level={level + 1}
                 onNavigate={onNavigate}
+                onEditFolder={onEditFolder}
+                onDeleteFolder={onDeleteFolder}
                 activeFolderId={activeFolderId}
               />
 
