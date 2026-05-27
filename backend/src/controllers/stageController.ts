@@ -38,3 +38,11 @@ export const reorderStages = asyncHandler(async (req: Request, res: Response) =>
 
   res.status(204).send();
 });
+
+export const deleteStage = asyncHandler(async (req: Request, res: Response) => {
+  const stageId = getParamString(req.params.id);
+  const stage = await getStageWithAccess(req.user!.memberships || [], stageId, "admin");
+
+  await prisma.stage.delete({ where: { id: stage.id } });
+  res.status(204).send();
+});

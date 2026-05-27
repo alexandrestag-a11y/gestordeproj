@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Folder as FolderIcon, ListTree, MoreVertical } from "lucide-react";
+import { ChevronRight, Folder as FolderIcon, ListTree, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { PageWrapper } from "../components/layout/PageWrapper";
 import { CompanyFilter } from "../components/dashboard/CompanyFilter";
@@ -24,6 +24,9 @@ export default function Dashboard() {
   const [folderName, setFolderName] = useState("");
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "tree">("grid");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState<"company" | "folder" | "project" | null>(null);
 
   const { data: companies = [] } = useCompanies();
   const { data: projects = [], isLoading } = useProjects(companyId || undefined);
@@ -68,39 +71,81 @@ export default function Dashboard() {
   }, [folders, activeFolderId]);
 
   const createProject = useMutation({
-    mutationFn: () => projectService.createProject({
-      name: projectName,
-      companyId,
-      folderId: activeFolderId
-    }),
+    mutationFn: () => {
+      if (editingId) {
+        return projectService.updateProject(editingId, { name: projectName });
+      }
+      return projectService.createProject({
+        name: projectName,
+        companyId,
+        folderId: activeFolderId
+      });
+    },
     onSuccess: async () => {
       setOpen(false);
       setProjectName("");
+      setEditingId(null);
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
       await queryClient.invalidateQueries({ queryKey: ["companies"] });
     },
   });
 
   const createFolder = useMutation({
-    mutationFn: () => projectService.createFolder({
-      name: folderName,
-      companyId,
-      parentId: activeFolderId
-    }),
+    mutationFn: () => {
+      if (editingId) {
+        return projectService.updateFolder(editingId, { name: folderName });
+      }
+      return projectService.createFolder({
+        name: folderName,
+        companyId,
+        parentId: activeFolderId
+      });
+    },
     onSuccess: async () => {
       setOpenFolder(false);
       setFolderName("");
+      setEditingId(null);
       const updated = await projectService.getFolders(companyId);
       setFolders(updated);
     },
   });
 
   const createCompany = useMutation({
-    mutationFn: () => projectService.createCompany({ name: companyName }),
+    mutationFn: () => {
+      if (editingId) {
+        return projectService.updateCompany(editingId, { name: companyName });
+      }
+      return projectService.createCompany({ name: companyName });
+    },
     onSuccess: async () => {
       setOpenCompany(false);
       setCompanyName("");
+      setEditingId(null);
       await queryClient.invalidateQueries({ queryKey: ["companies"] });
+    },
+  });
+
+  const deleteCompany = useMutation({
+    mutationFn: projectService.deleteCompany,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["companies"] });
+      setCompanyId("");
+    },
+  });
+
+  const deleteFolder = useMutation({
+    mutationFn: projectService.deleteFolder,
+    onSuccess: async () => {
+      const updated = await projectService.getFolders(companyId);
+      setFolders(updated);
+      setActiveFolderId(null);
+    },
+  });
+
+  const deleteProject = useMutation({
+    mutationFn: projectService.deleteProject,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 
@@ -119,11 +164,49 @@ export default function Dashboard() {
               setCompanyId(val);
               setActiveFolderId(null);
             }} />
-            <Button className="bg-slate-200 text-slate-800 hover:bg-slate-300" onClick={() => setOpenCompany(true)}>
-              Nova Empresa
-            </Button>
+
+            <div className="flex gap-1">
+              <Button className="bg-slate-200 text-slate-800 hover:bg-slate-300" onClick={() => {
+                setEditMode("company");
+                setOpenCompany(true);
+              }}>
+                Nova Empresa
+              </Button>
+              {companyId && (
+                <>
+                  <button
+                    className="p-2 text-slate-400 hover:text-blue-600"
+                    onClick={() => {
+                      const comp = companies.find(c => c.id === companyId);
+                      if (comp) {
+                        setCompanyName(comp.name);
+                        setEditingId(comp.id);
+                        setEditMode("company");
+                        setOpenCompany(true);
+                      }
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    className="p-2 text-slate-400 hover:text-red-600"
+                    onClick={() => {
+                      if (confirm("Deseja realmente excluir esta empresa e todos os seus projetos?")) {
+                        deleteCompany.mutate(companyId);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+            </div>
+
             {companyId && (
-              <Button className="bg-slate-200 text-slate-800 hover:bg-slate-300" onClick={() => setOpenFolder(true)}>
+              <Button className="bg-slate-200 text-slate-800 hover:bg-slate-300" onClick={() => {
+                setEditMode("folder");
+                setOpenFolder(true);
+              }}>
                 Nova Pasta
               </Button>
             )}
@@ -202,7 +285,7 @@ export default function Dashboard() {
           {currentFolders.map((folder) => (
             <div
               key={folder.id}
-              className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm border border-slate-200 cursor-pointer hover:border-blue-400 transition"
+              className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm border border-slate-200 cursor-pointer hover:border-blue-400 transition group"
               onClick={() => setActiveFolderId(folder.id)}
             >
               <div className="flex items-center gap-3">
@@ -211,7 +294,31 @@ export default function Dashboard() {
                 </div>
                 <span className="font-medium text-slate-900">{folder.name}</span>
               </div>
-              <MoreVertical className="h-4 w-4 text-slate-400" />
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                <button
+                  className="p-1.5 text-slate-400 hover:text-blue-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFolderName(folder.name);
+                    setEditingId(folder.id);
+                    setEditMode("folder");
+                    setOpenFolder(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  className="p-1.5 text-slate-400 hover:text-red-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm("Deseja realmente excluir esta pasta e todo o seu conteúdo?")) {
+                      deleteFolder.mutate(folder.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           ))}
 
@@ -219,13 +326,48 @@ export default function Dashboard() {
             ? Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className="h-48 animate-pulse rounded-2xl bg-white/70" />
               ))
-            : filteredProjects.map((project) => <ProjectCard key={project.id} project={project} />)}
+            : filteredProjects.map((project) => (
+              <div key={project.id} className="relative group">
+                <ProjectCard project={project} />
+                <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-200 text-slate-400 hover:text-blue-600"
+                    onClick={() => {
+                      setProjectName(project.name);
+                      setEditingId(project.id);
+                      setEditMode("project");
+                      setOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    className="p-1.5 bg-white rounded-lg shadow-sm border border-slate-200 text-slate-400 hover:text-red-600"
+                    onClick={() => {
+                      if (confirm("Deseja realmente excluir este projeto?")) {
+                        deleteProject.mutate(project.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
             </>
           )}
         </div>
       </div>
 
-      <Modal open={open} title="Criar novo projeto" onClose={() => setOpen(false)}>
+      <Modal
+        open={open}
+        title={editingId ? "Editar projeto" : "Criar novo projeto"}
+        onClose={() => {
+          setOpen(false);
+          setEditingId(null);
+          setProjectName("");
+        }}
+      >
         <div className="space-y-4">
           <Input
             placeholder="Nome do projeto"
@@ -233,12 +375,20 @@ export default function Dashboard() {
             onChange={(event) => setProjectName(event.target.value)}
           />
           <Button className="w-full" onClick={() => createProject.mutate()} disabled={!projectName || !companyId}>
-            Salvar
+            {editingId ? "Salvar Alteracoes" : "Criar Projeto"}
           </Button>
         </div>
       </Modal>
 
-      <Modal open={openFolder} title="Criar nova pasta" onClose={() => setOpenFolder(false)}>
+      <Modal
+        open={openFolder}
+        title={editingId ? "Editar pasta" : "Criar nova pasta"}
+        onClose={() => {
+          setOpenFolder(false);
+          setEditingId(null);
+          setFolderName("");
+        }}
+      >
         <div className="space-y-4">
           <Input
             placeholder="Nome da pasta"
@@ -246,12 +396,20 @@ export default function Dashboard() {
             onChange={(event) => setFolderName(event.target.value)}
           />
           <Button className="w-full" onClick={() => createFolder.mutate()} disabled={!folderName}>
-            Salvar
+            {editingId ? "Salvar Alteracoes" : "Criar Pasta"}
           </Button>
         </div>
       </Modal>
 
-      <Modal open={openCompany} title="Criar nova empresa" onClose={() => setOpenCompany(false)}>
+      <Modal
+        open={openCompany}
+        title={editingId ? "Editar empresa" : "Criar nova empresa"}
+        onClose={() => {
+          setOpenCompany(false);
+          setEditingId(null);
+          setCompanyName("");
+        }}
+      >
         <div className="space-y-4">
           <Input
             placeholder="Nome da empresa"
@@ -259,7 +417,7 @@ export default function Dashboard() {
             onChange={(event) => setCompanyName(event.target.value)}
           />
           <Button className="w-full" onClick={() => createCompany.mutate()} disabled={!companyName}>
-            Salvar
+            {editingId ? "Salvar Alteracoes" : "Criar Empresa"}
           </Button>
         </div>
       </Modal>

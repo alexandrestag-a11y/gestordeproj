@@ -74,6 +74,14 @@ export const updateItem = asyncHandler(async (req: Request, res: Response) => {
   res.json(item);
 });
 
+export const deleteItem = asyncHandler(async (req: Request, res: Response) => {
+  const itemId = getParamString(req.params.id);
+  await getItemWithAccess(req.user!.memberships || [], itemId, "admin");
+
+  await prisma.item.delete({ where: { id: itemId } });
+  res.status(204).send();
+});
+
 export const moveItem = asyncHandler(async (req: Request, res: Response) => {
   const itemId = getParamString(req.params.id);
   await getItemWithAccess(req.user!.memberships || [], itemId, "member");

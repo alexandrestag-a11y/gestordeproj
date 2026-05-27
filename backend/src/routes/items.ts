@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createChildItem,
+  deleteItem,
   getItemDetail,
   moveItem,
   reorderItem,
@@ -15,6 +16,7 @@ const router = Router();
 
 router.get("/:id", getItemDetail);
 router.put("/:id", updateItem);
+router.delete("/:id", deleteItem);
 router.patch("/:id/move", moveItem);
 router.patch("/:id/reorder", reorderItem);
 router.post("/:id/children", createChildItem);

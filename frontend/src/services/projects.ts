@@ -10,6 +10,13 @@ export const projectService = {
     const { data } = await api.post<Company>("/companies", payload);
     return data;
   },
+  deleteCompany: async (id: string) => {
+    await api.delete(`/companies/${id}`);
+  },
+  updateCompany: async (id: string, payload: { name: string; logoUrl?: string }) => {
+    const { data } = await api.put<Company>(`/companies/${id}`, payload);
+    return data;
+  },
   getProjects: async (companyId?: string) => {
     const { data } = await api.get<Project[]>("/projects", {
       params: companyId ? { companyId } : undefined,
@@ -50,6 +57,9 @@ export const projectService = {
     const { data } = await api.put<Project>(`/projects/${id}`, payload);
     return data;
   },
+  deleteProject: async (id: string) => {
+    await api.delete(`/projects/${id}`);
+  },
   getSubprojects: async (projectId: string) => {
     const { data } = await api.get<Subproject[]>(`/projects/${projectId}/subprojects`);
     return data;
@@ -58,6 +68,9 @@ export const projectService = {
     const { data } = await api.post<Subproject>(`/projects/${projectId}/subprojects`, payload);
     return data;
   },
+  deleteSubproject: async (id: string) => {
+    await api.delete(`/subprojects/${id}`);
+  },
   createStage: async (subprojectId: string, payload: { name: string; color?: string }) => {
     const { data } = await api.post(`/subprojects/${subprojectId}/stages`, payload);
     return data;
@@ -65,6 +78,9 @@ export const projectService = {
   updateStage: async (stageId: string, payload: { name?: string; color?: string }) => {
     const { data } = await api.put(`/stages/${stageId}`, payload);
     return data;
+  },
+  deleteStage: async (id: string) => {
+    await api.delete(`/stages/${id}`);
   },
   createItem: async (stageId: string, payload: { name: string; parentId?: string | null }) => {
     const { data } = await api.post<Item>(`/stages/${stageId}/items`, payload);
@@ -77,6 +93,9 @@ export const projectService = {
   updateItem: async (itemId: string, payload: Partial<Item>) => {
     const { data } = await api.put<Item>(`/items/${itemId}`, payload);
     return data;
+  },
+  deleteItem: async (id: string) => {
+    await api.delete(`/items/${id}`);
   },
   moveItem: async (
     itemId: string,
@@ -142,6 +161,9 @@ export const projectService = {
   },
   deleteAttachment: async (attachmentId: string) => {
     await api.delete(`/attachments/${attachmentId}`);
+  },
+  deleteList: async (listId: string) => {
+    await api.delete(`/lists/${listId}`);
   },
   getUserProjects: async (userId: string) => {
     const { data } = await api.get(`/users/${userId}/projects`);

@@ -57,3 +57,11 @@ export const createStage = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(201).json(stage);
 });
+
+export const deleteSubproject = asyncHandler(async (req: Request, res: Response) => {
+  const subprojectId = getParamString(req.params.id);
+  const subproject = await getSubprojectWithAccess(req.user!.memberships || [], subprojectId, "admin");
+
+  await prisma.subproject.delete({ where: { id: subproject.id } });
+  res.status(204).send();
+});
