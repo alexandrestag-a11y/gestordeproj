@@ -305,31 +305,6 @@ export default function Dashboard() {
                 </div>
                 <span className="font-medium text-slate-900">{folder.name}</span>
               </div>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                <button
-                  className="p-1.5 text-slate-400 hover:text-blue-600"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setFolderName(folder.name);
-                    setEditingId(folder.id);
-                    setEditMode("folder");
-                    setOpenFolder(true);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-                <button
-                  className="p-1.5 text-slate-400 hover:text-red-600"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (confirm("Deseja realmente excluir esta pasta e todo o seu conteúdo?")) {
-                      deleteFolder.mutate(folder.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
             </div>
           ))}
 

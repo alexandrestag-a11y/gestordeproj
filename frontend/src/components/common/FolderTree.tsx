@@ -54,26 +54,6 @@ export const FolderTree = ({
               <FolderIcon className={`h-4 w-4 ${activeFolderId === folder.id ? "text-blue-600" : "text-slate-400"}`} />
               <span className="text-sm font-medium">{folder.name}</span>
             </div>
-            <div className="flex gap-1">
-              <button
-                className="p-1 hover:text-blue-600"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditFolder?.(folder);
-                }}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-              <button
-                className="p-1 hover:text-red-600"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteFolder?.(folder.id);
-                }}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
           </div>
 
           {expanded[folder.id] && (
