@@ -6,10 +6,14 @@ export const StageColumn = ({
   stage,
   onAddItem,
   onOpenItem,
+  onEditItem,
+  onDeleteItem,
 }: {
   stage: Stage;
   onAddItem: (stageId: string) => void;
   onOpenItem: (itemId: string) => void;
+  onEditItem?: (item: Item) => void;
+  onDeleteItem?: (id: string) => void;
 }) => (
   <section className="flex w-80 shrink-0 flex-col rounded-3xl border border-slate-200 bg-slate-50/80 p-4">
     <div className="mb-4 flex items-center justify-between">
@@ -29,7 +33,13 @@ export const StageColumn = ({
     </div>
     <div className="space-y-3">
       {stage.items.map((item: Item) => (
-        <ItemRow key={item.id} item={item} onOpen={onOpenItem} />
+        <ItemRow
+          key={item.id}
+          item={item}
+          onOpen={onOpenItem}
+          onEdit={onEditItem}
+          onDelete={onDeleteItem}
+        />
       ))}
     </div>
   </section>

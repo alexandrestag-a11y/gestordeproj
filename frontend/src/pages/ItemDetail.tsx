@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Pencil, Trash2 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { FileUpload } from "../components/item/FileUpload";
 import { FieldEditor } from "../components/item/FieldEditor";
@@ -53,13 +54,34 @@ export default function ItemDetailPage() {
   });
 
   const [openSubtaskModal, setOpenSubtaskModal] = useState(false);
+  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
   const [subtaskName, setSubtaskName] = useState("");
 
   const createChild = useMutation({
-    mutationFn: () => projectService.createChildItem(id!, { name: subtaskName }),
+    mutationFn: () => {
+      if (editingSubtaskId) {
+        return projectService.updateItem(editingSubtaskId, { name: subtaskName });
+      }
+      return projectService.createChildItem(id!, { name: subtaskName });
+    },
     onSuccess: async () => {
       setOpenSubtaskModal(false);
       setSubtaskName("");
+      setEditingSubtaskId(null);
+      await queryClient.invalidateQueries({ queryKey: ["item", id] });
+    },
+  });
+
+  const deleteItem = useMutation({
+    mutationFn: projectService.deleteItem,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["item", id] });
+    },
+  });
+
+  const deleteList = useMutation({
+    mutationFn: projectService.deleteList,
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["item", id] });
     },
   });
@@ -120,8 +142,30 @@ export default function ItemDetailPage() {
             </div>
             <div className="space-y-3">
               {item.children.map((child) => (
-                <div key={child.id} className="rounded-2xl border border-slate-200 px-4 py-3">
+                <div key={child.id} className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 group">
                   <div className="font-medium text-slate-900">{child.name}</div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                    <button
+                      className="p-1 text-slate-400 hover:text-blue-600"
+                      onClick={() => {
+                        setSubtaskName(child.name);
+                        setEditingSubtaskId(child.id);
+                        setOpenSubtaskModal(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="p-1 text-slate-400 hover:text-red-600"
+                      onClick={() => {
+                        if (confirm("Excluir esta subtarefa?")) {
+                          deleteItem.mutate(child.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -134,7 +178,25 @@ export default function ItemDetailPage() {
               <h3 className="text-lg font-semibold text-slate-900">Checklists</h3>
               <Button onClick={() => createChecklist.mutate()}>Nova lista</Button>
             </div>
-            <ListEditor lists={item.lists} onToggle={toggleChecklist} />
+            <div className="space-y-6">
+              {item.lists.map(list => (
+                <div key={list.id} className="relative group">
+                   <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition">
+                      <button
+                        className="p-1 text-slate-400 hover:text-red-600"
+                        onClick={() => {
+                          if (confirm("Excluir esta lista?")) {
+                            deleteList.mutate(list.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                   </div>
+                   <ListEditor lists={[list]} onToggle={toggleChecklist} />
+                </div>
+              ))}
+            </div>
           </Card>
           <FileUpload
             attachments={item.attachments}
@@ -148,7 +210,15 @@ export default function ItemDetailPage() {
         </div>
       </div>
 
-      <Modal open={openSubtaskModal} title="Nova Subtarefa" onClose={() => setOpenSubtaskModal(false)}>
+      <Modal
+        open={openSubtaskModal}
+        title={editingSubtaskId ? "Editar Subtarefa" : "Nova Subtarefa"}
+        onClose={() => {
+          setOpenSubtaskModal(false);
+          setEditingSubtaskId(null);
+          setSubtaskName("");
+        }}
+      >
         <div className="space-y-4">
           <Input
             placeholder="Nome da subtarefa"
@@ -160,7 +230,7 @@ export default function ItemDetailPage() {
             onClick={() => createChild.mutate()}
             disabled={!subtaskName || createChild.isPending}
           >
-            {createChild.isPending ? "Criando..." : "Criar Subtarefa"}
+            {createChild.isPending ? "Salvando..." : (editingSubtaskId ? "Salvar Alteracoes" : "Criar Subtarefa")}
           </Button>
         </div>
       </Modal>
