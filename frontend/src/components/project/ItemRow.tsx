@@ -32,6 +32,16 @@ export const ItemRow = ({
             </span>
             <span>{item.children.length} subtarefas</span>
           </div>
+
+        {item.fieldValues && item.fieldValues.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {item.fieldValues.filter(fv => fv.value).map((fv) => (
+              <div key={fv.id} className="rounded-md bg-slate-100 px-2 py-1 text-[10px] text-slate-600 border border-slate-200">
+                <span className="font-semibold">{fv.field.name}:</span> {fv.value}
+              </div>
+            ))}
+          </div>
+        )}
         </div>
       </div>
     </button>
