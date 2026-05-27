@@ -136,3 +136,24 @@ export const addMember = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(201).json(membership);
 });
+
+export const updateCompany = asyncHandler(async (req: Request, res: Response) => {
+  const companyId = getParamString(req.params.id);
+  ensureCompanyRole(req.user?.memberships, companyId, "admin");
+  const data = companySchema.partial().parse(req.body);
+
+  const updated = await prisma.company.update({
+    where: { id: companyId },
+    data,
+  });
+
+  res.json(updated);
+});
+
+export const deleteCompany = asyncHandler(async (req: Request, res: Response) => {
+  const companyId = getParamString(req.params.id);
+  ensureCompanyRole(req.user?.memberships, companyId, "admin");
+
+  await prisma.company.delete({ where: { id: companyId } });
+  res.status(204).send();
+});

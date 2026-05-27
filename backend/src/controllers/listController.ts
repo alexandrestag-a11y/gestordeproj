@@ -70,3 +70,19 @@ export const updateList = asyncHandler(async (req: Request, res: Response) => {
 
   res.json(updated);
 });
+
+export const deleteList = asyncHandler(async (req: Request, res: Response) => {
+  const listId = getParamString(req.params.id);
+  const list = await prisma.itemList.findUnique({
+    where: { id: listId },
+  });
+
+  if (!list) {
+    throw new HttpError(404, "List not found");
+  }
+
+  await getItemWithAccess(req.user!.memberships || [], list.itemId, "admin");
+
+  await prisma.itemList.delete({ where: { id: listId } });
+  res.status(204).send();
+});
