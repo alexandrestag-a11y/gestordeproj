@@ -28,6 +28,7 @@ export default function ProjectView() {
   const [stageName, setStageName] = useState("");
   const [stageSubprojectId, setStageSubprojectId] = useState<string>("");
   const [openFieldModal, setOpenFieldModal] = useState(false);
+  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
   const [fieldName, setFieldName] = useState("");
   const [fieldType, setFieldType] = useState("text");
   const [fieldOptions, setFieldOptions] = useState("");
@@ -95,8 +96,8 @@ export default function ProjectView() {
   });
 
   const createField = useMutation({
-    mutationFn: () =>
-      projectService.createField(id!, {
+    mutationFn: () => {
+      const payload = {
         name: fieldName,
         type: fieldType,
         options:
@@ -106,12 +107,25 @@ export default function ProjectView() {
                 .map((option) => option.trim())
                 .filter(Boolean)
             : undefined,
-      }),
+      } as any;
+      if (editingFieldId) {
+        return projectService.updateField(editingFieldId, payload);
+      }
+      return projectService.createField(id!, payload);
+    },
     onSuccess: async () => {
       setOpenFieldModal(false);
       setFieldName("");
       setFieldType("text");
       setFieldOptions("");
+      setEditingFieldId(null);
+      await queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+
+  const deleteField = useMutation({
+    mutationFn: projectService.deleteField,
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
@@ -275,15 +289,38 @@ export default function ProjectView() {
               onChange={(event) => setFieldOptions(event.target.value)}
             />
           ) : null}
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-60 overflow-auto">
             {project?.customFields?.map((field) => (
-              <div key={field.id} className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700">
-                {field.name} <span className="text-slate-400">({field.type})</span>
+              <div key={field.id} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                <span>{field.name} <span className="text-slate-400">({field.type})</span></span>
+                <div className="flex gap-1">
+                  <button
+                    className="p-1 hover:text-blue-600"
+                    onClick={() => {
+                      setFieldName(field.name);
+                      setFieldType(field.type);
+                      setFieldOptions(field.options ? JSON.parse(field.options).join(",") : "");
+                      setEditingFieldId(field.id);
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    className="p-1 hover:text-red-600"
+                    onClick={() => {
+                      if (confirm("Deseja realmente excluir este campo?")) {
+                        deleteField.mutate(field.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
           <Button className="w-full" onClick={() => createField.mutate()} disabled={!fieldName}>
-            Salvar campo
+            {editingFieldId ? "Salvar Alteracoes" : "Salvar campo"}
           </Button>
         </div>
       </Modal>
