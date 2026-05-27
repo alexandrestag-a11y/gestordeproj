@@ -99,30 +99,6 @@ export default function ItemDetailPage() {
     await queryClient.invalidateQueries({ queryKey: ["item", id] });
   };
 
-  const updateChecklistEntry = async (listId: string, entryId: string, nextText: string) => {
-    const list = item?.lists.find((entry) => entry.id === listId);
-    if (!list) return;
-
-    await projectService.updateList(listId, {
-      title: list.title,
-      entries: list.entries.map((entry) =>
-        entry.id === entryId ? { ...entry, text: nextText } : entry,
-      ),
-    });
-    await queryClient.invalidateQueries({ queryKey: ["item", id] });
-  };
-
-  const deleteChecklistEntry = async (listId: string, entryId: string) => {
-    const list = item?.lists.find((entry) => entry.id === listId);
-    if (!list || !confirm("Remover este item do checklist?")) return;
-
-    await projectService.updateList(listId, {
-      title: list.title,
-      entries: list.entries.filter((entry) => entry.id !== entryId),
-    });
-    await queryClient.invalidateQueries({ queryKey: ["item", id] });
-  };
-
   if (!item) {
     return (
       <PageWrapper>
@@ -217,12 +193,7 @@ export default function ItemDetailPage() {
                         <Trash2 className="h-4 w-4" />
                       </button>
                    </div>
-                   <ListEditor
-                    lists={[list]}
-                    onToggle={toggleChecklist}
-                    onEditEntry={updateChecklistEntry}
-                    onDeleteEntry={deleteChecklistEntry}
-                   />
+                   <ListEditor lists={[list]} onToggle={toggleChecklist} />
                 </div>
               ))}
             </div>
