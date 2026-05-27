@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Pencil, Trash2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -67,14 +68,28 @@ export default function ProjectView() {
   });
 
   const [openItemModal, setOpenItemModal] = useState(false);
+  const [editingItemId, setEditingId] = useState<string | null>(null);
   const [itemName, setItemName] = useState("");
   const [targetStageId, setTargetStageId] = useState("");
 
   const createItem = useMutation({
-    mutationFn: () => projectService.createItem(targetStageId, { name: itemName }),
+    mutationFn: () => {
+      if (editingItemId) {
+        return projectService.updateItem(editingItemId, { name: itemName });
+      }
+      return projectService.createItem(targetStageId, { name: itemName });
+    },
     onSuccess: async () => {
       setOpenItemModal(false);
       setItemName("");
+      setEditingId(null);
+      await queryClient.invalidateQueries({ queryKey: ["subprojects", id] });
+    },
+  });
+
+  const deleteItem = useMutation({
+    mutationFn: projectService.deleteItem,
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["subprojects", id] });
     },
   });
@@ -169,10 +184,22 @@ export default function ProjectView() {
                 stage={stage}
                 onAddItem={(stageId) => {
                   setTargetStageId(stageId);
+                  setItemName("");
+                  setEditingId(null);
                   setOpenItemModal(true);
                 }}
                 onOpenItem={(itemId) => {
                   navigate(`/items/${itemId}`);
+                }}
+                onEditItem={(item) => {
+                  setItemName(item.name);
+                  setEditingId(item.id);
+                  setOpenItemModal(true);
+                }}
+                onDeleteItem={(itemId) => {
+                  if (confirm("Deseja realmente excluir este item?")) {
+                    deleteItem.mutate(itemId);
+                  }
                 }}
               />
             ))}
@@ -261,7 +288,15 @@ export default function ProjectView() {
         </div>
       </Modal>
 
-      <Modal open={openItemModal} title="Novo Item" onClose={() => setOpenItemModal(false)}>
+      <Modal
+        open={openItemModal}
+        title={editingItemId ? "Editar Item" : "Novo Item"}
+        onClose={() => {
+          setOpenItemModal(false);
+          setEditingId(null);
+          setItemName("");
+        }}
+      >
         <div className="space-y-4">
           <Input
             placeholder="Nome do item"
@@ -273,7 +308,7 @@ export default function ProjectView() {
             onClick={() => createItem.mutate()}
             disabled={!itemName || createItem.isPending}
           >
-            {createItem.isPending ? "Criando..." : "Criar Item"}
+            {createItem.isPending ? "Salvando..." : (editingItemId ? "Salvar Alteracoes" : "Criar Item")}
           </Button>
         </div>
       </Modal>
