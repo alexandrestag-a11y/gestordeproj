@@ -57,6 +57,10 @@ export const projectService = {
     const { data } = await api.put<Project>(`/projects/${id}`, payload);
     return data;
   },
+  updateSubproject: async (id: string, payload: { name: string }) => {
+    const { data } = await api.put<Subproject>(`/subprojects/${id}`, payload);
+    return data;
+  },
   deleteProject: async (id: string) => {
     await api.delete(`/projects/${id}`);
   },
