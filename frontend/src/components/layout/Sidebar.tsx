@@ -5,28 +5,11 @@ import type { Company, Folder, Project, Subproject, Stage, Item } from "../../ty
 import { useAuth } from "../../contexts/AuthContext";
 import { useFolders, useProjects, useSubprojects } from "../../hooks/useProjects";
 
-const ProjectTreeItem = ({
-  project,
-  level = 0,
-  onEdit,
-  onDelete,
-  onEditSubproject,
-  onDeleteSubproject,
-  onEditStage,
-  onDeleteStage,
-  onEditItem,
-  onDeleteItem,
-}: {
+const ProjectTreeItem = ({ project, level = 0, onEdit, onDelete }: {
   project: Project,
   level?: number,
   onEdit?: (p: Project) => void,
-  onDelete?: (id: string) => void,
-  onEditSubproject?: (s: Subproject) => void,
-  onDeleteSubproject?: (id: string) => void,
-  onEditStage?: (s: Stage) => void,
-  onDeleteStage?: (id: string) => void,
-  onEditItem?: (i: Item) => void,
-  onDeleteItem?: (id: string) => void,
+  onDelete?: (id: string) => void
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { data: subprojects = [] } = useSubprojects(isOpen ? project.id : undefined);
@@ -44,7 +27,7 @@ const ProjectTreeItem = ({
         <FolderKanban className="h-3.5 w-3.5 text-blue-500/50" />
         <Link
           to={`/projects/${project.id}`}
-          className="truncate flex-1 hover:underline text-xs"
+          className="truncate flex-1 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {project.name}
@@ -74,17 +57,7 @@ const ProjectTreeItem = ({
       {isOpen && (
         <div className="space-y-1">
           {subprojects.map(sub => (
-            <SubprojectTreeItem
-              key={sub.id}
-              subproject={sub}
-              level={level + 1}
-              onEdit={onEditSubproject}
-              onDelete={onDeleteSubproject}
-              onEditStage={onEditStage}
-              onDeleteStage={onDeleteStage}
-              onEditItem={onEditItem}
-              onDeleteItem={onDeleteItem}
-            />
+            <SubprojectTreeItem key={sub.id} subproject={sub} level={level + 1} />
           ))}
         </div>
       )}
@@ -92,31 +65,13 @@ const ProjectTreeItem = ({
   );
 };
 
-const SubprojectTreeItem = ({
-  subproject,
-  level = 0,
-  onEdit,
-  onDelete,
-  onEditStage,
-  onDeleteStage,
-  onEditItem,
-  onDeleteItem,
-}: {
-  subproject: Subproject,
-  level?: number,
-  onEdit?: (s: Subproject) => void,
-  onDelete?: (id: string) => void,
-  onEditStage?: (s: Stage) => void,
-  onDeleteStage?: (id: string) => void,
-  onEditItem?: (i: Item) => void,
-  onDeleteItem?: (id: string) => void,
-}) => {
+const SubprojectTreeItem = ({ subproject, level = 0 }: { subproject: Subproject, level?: number }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="space-y-1 group/sub">
+    <div className="space-y-1">
       <div
-        className="flex w-full items-center gap-2 rounded-xl py-2 pr-3 text-[13px] text-slate-500 transition hover:bg-white/5 hover:text-white cursor-pointer"
+        className="flex w-full items-center gap-2 rounded-xl py-2 pr-3 text-sm text-slate-500 transition hover:bg-white/5 hover:text-white cursor-pointer"
         style={{ paddingLeft: `${(level + 1) * 0.75 + 0.75}rem` }}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -124,40 +79,12 @@ const SubprojectTreeItem = ({
           {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         </button>
         <span className="truncate flex-1">{subproject.name}</span>
-        <div className="flex gap-1 opacity-0 group-hover/sub:opacity-100 transition ml-2">
-          <button
-            className="p-1 hover:text-blue-400"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit?.(subproject);
-            }}
-          >
-            <Pencil className="h-3 w-3" />
-          </button>
-          <button
-            className="p-1 hover:text-red-400"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.(subproject.id);
-            }}
-          >
-            <Trash2 className="h-3 w-3" />
-          </button>
-        </div>
       </div>
 
       {isOpen && (
         <div className="space-y-1">
           {subproject.stages.map(stage => (
-            <StageTreeItem
-              key={stage.id}
-              stage={stage}
-              level={level + 1}
-              onEdit={onEditStage}
-              onDelete={onDeleteStage}
-              onEditItem={onEditItem}
-              onDeleteItem={onDeleteItem}
-            />
+            <StageTreeItem key={stage.id} stage={stage} level={level + 1} />
           ))}
         </div>
       )}
@@ -165,25 +92,11 @@ const SubprojectTreeItem = ({
   );
 };
 
-const StageTreeItem = ({
-  stage,
-  level = 0,
-  onEdit,
-  onDelete,
-  onEditItem,
-  onDeleteItem,
-}: {
-  stage: Stage,
-  level?: number,
-  onEdit?: (s: Stage) => void,
-  onDelete?: (id: string) => void,
-  onEditItem?: (i: Item) => void,
-  onDeleteItem?: (id: string) => void,
-}) => {
+const StageTreeItem = ({ stage, level = 0 }: { stage: Stage, level?: number }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="space-y-1 group/stage">
+    <div className="space-y-1">
       <div
         className="flex w-full items-center gap-2 rounded-xl py-2 pr-3 text-xs text-slate-500 transition hover:bg-white/5 hover:text-white cursor-pointer"
         style={{ paddingLeft: `${(level + 1) * 0.75 + 0.75}rem` }}
@@ -193,67 +106,24 @@ const StageTreeItem = ({
           {isOpen ? <ChevronDown className="h-2.5 w-2.5" /> : <ChevronRight className="h-2.5 w-2.5" />}
         </button>
         <div
-          className="h-2 w-2 rounded-full shrink-0"
+          className="h-2 w-2 rounded-full"
           style={{ backgroundColor: stage.color || "#475569" }}
         />
         <span className="truncate flex-1">{stage.name}</span>
-        <div className="flex gap-1 opacity-0 group-hover/stage:opacity-100 transition ml-2">
-          <button
-            className="p-1 hover:text-blue-400"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit?.(stage);
-            }}
-          >
-            <Pencil className="h-2.5 w-2.5" />
-          </button>
-          <button
-            className="p-1 hover:text-red-400"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.(stage.id);
-            }}
-          >
-            <Trash2 className="h-2.5 w-2.5" />
-          </button>
-        </div>
       </div>
 
       {isOpen && (
         <div className="space-y-1">
           {stage.items.map(item => (
-            <div key={item.id} className="group/it relative">
-              <Link
-                to={`/items/${item.id}`}
-                className="flex items-center gap-2 rounded-xl py-1.5 pr-3 text-[11px] text-slate-600 transition hover:bg-white/5 hover:text-white"
-                style={{ paddingLeft: `${(level + 2) * 0.75 + 0.75}rem` }}
-              >
-                <CheckSquare className="h-3 w-3 text-slate-700" />
-                <span className="truncate flex-1">{item.name}</span>
-              </Link>
-              <div className="absolute top-1 right-2 flex gap-1 opacity-0 group-hover/it:opacity-100 transition">
-                <button
-                  className="p-0.5 hover:text-blue-400"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onEditItem?.(item);
-                  }}
-                >
-                  <Pencil className="h-2.5 w-2.5" />
-                </button>
-                <button
-                  className="p-0.5 hover:text-red-400"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onDeleteItem?.(item.id);
-                  }}
-                >
-                  <Trash2 className="h-2.5 w-2.5" />
-                </button>
-              </div>
-            </div>
+            <Link
+              key={item.id}
+              to={`/items/${item.id}`}
+              className="flex items-center gap-2 rounded-xl py-1.5 pr-3 text-[11px] text-slate-600 transition hover:bg-white/5 hover:text-white"
+              style={{ paddingLeft: `${(level + 2) * 0.75 + 0.75}rem` }}
+            >
+              <CheckSquare className="h-3 w-3 text-slate-700" />
+              <span className="truncate">{item.name}</span>
+            </Link>
           ))}
         </div>
       )}
@@ -270,12 +140,6 @@ const FolderItem = ({
   onDeleteFolder,
   onEditProject,
   onDeleteProject,
-  onEditSubproject,
-  onDeleteSubproject,
-  onEditStage,
-  onDeleteStage,
-  onEditItem,
-  onDeleteItem,
 }: {
   folder: Folder;
   allFolders: Folder[];
@@ -285,12 +149,6 @@ const FolderItem = ({
   onDeleteFolder?: (id: string) => void;
   onEditProject?: (p: Project) => void;
   onDeleteProject?: (id: string) => void;
-  onEditSubproject?: (s: Subproject) => void;
-  onDeleteSubproject?: (id: string) => void;
-  onEditStage?: (s: Stage) => void;
-  onDeleteStage?: (id: string) => void;
-  onEditItem?: (i: Item) => void;
-  onDeleteItem?: (id: string) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const subfolders = allFolders.filter(f => f.parentId === folder.id);
@@ -350,12 +208,6 @@ const FolderItem = ({
               level={level + 1}
               onEdit={onEditProject}
               onDelete={onDeleteProject}
-              onEditSubproject={onEditSubproject}
-              onDeleteSubproject={onDeleteSubproject}
-              onEditStage={onEditStage}
-              onDeleteStage={onDeleteStage}
-              onEditItem={onEditItem}
-              onDeleteItem={onDeleteItem}
             />
           ))}
         </div>
@@ -371,12 +223,6 @@ export const Sidebar = ({
   onDeleteFolder,
   onEditProject,
   onDeleteProject,
-  onEditSubproject,
-  onDeleteSubproject,
-  onEditStage,
-  onDeleteStage,
-  onEditItem,
-  onDeleteItem,
 }: {
   companies: Company[];
   activeCompanyId?: string;
@@ -384,12 +230,6 @@ export const Sidebar = ({
   onDeleteFolder?: (id: string) => void;
   onEditProject?: (p: Project) => void;
   onDeleteProject?: (id: string) => void;
-  onEditSubproject?: (s: Subproject) => void;
-  onDeleteSubproject?: (id: string) => void;
-  onEditStage?: (s: Stage) => void;
-  onDeleteStage?: (id: string) => void;
-  onEditItem?: (i: Item) => void;
-  onDeleteItem?: (id: string) => void;
 }) => {
   const { user, logout } = useAuth();
   const { data: folders = [] } = useFolders(activeCompanyId);
@@ -439,12 +279,6 @@ export const Sidebar = ({
                       onDeleteFolder={onDeleteFolder}
                       onEditProject={onEditProject}
                       onDeleteProject={onDeleteProject}
-                      onEditSubproject={onEditSubproject}
-                      onDeleteSubproject={onDeleteSubproject}
-                      onEditStage={onEditStage}
-                      onDeleteStage={onDeleteStage}
-                      onEditItem={onEditItem}
-                      onDeleteItem={onDeleteItem}
                     />
                   ))}
                   {rootProjects.map(project => (
@@ -453,12 +287,6 @@ export const Sidebar = ({
                       project={project}
                       onEdit={onEditProject}
                       onDelete={onDeleteProject}
-                      onEditSubproject={onEditSubproject}
-                      onDeleteSubproject={onDeleteSubproject}
-                      onEditStage={onEditStage}
-                      onDeleteStage={onDeleteStage}
-                      onEditItem={onEditItem}
-                      onDeleteItem={onDeleteItem}
                     />
                   ))}
                 </div>

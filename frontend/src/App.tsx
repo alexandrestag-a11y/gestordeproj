@@ -38,9 +38,6 @@ const PrivateLayout = () => {
   const [openCompany, setOpenCompany] = useState(false);
   const [openFolder, setOpenFolder] = useState(false);
   const [openProject, setOpenProject] = useState(false);
-  const [openSubproject, setOpenSubproject] = useState(false);
-  const [openStage, setOpenStage] = useState(false);
-  const [openItem, setOpenItem] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
 
@@ -83,37 +80,6 @@ const PrivateLayout = () => {
     },
   });
 
-  const createSubproject = useMutation({
-    mutationFn: () => projectService.updateSubproject(editingId!, { name }),
-    onSuccess: async () => {
-      setOpenSubproject(false);
-      setName("");
-      setEditingId(null);
-      await queryClient.invalidateQueries({ queryKey: ["subprojects"] });
-    },
-  });
-
-  const createStage = useMutation({
-    mutationFn: () => projectService.updateStage(editingId!, { name }),
-    onSuccess: async () => {
-      setOpenStage(false);
-      setName("");
-      setEditingId(null);
-      await queryClient.invalidateQueries({ queryKey: ["subprojects"] });
-    },
-  });
-
-  const createItem = useMutation({
-    mutationFn: () => projectService.updateItem(editingId!, { name }),
-    onSuccess: async () => {
-      setOpenItem(false);
-      setName("");
-      setEditingId(null);
-      await queryClient.invalidateQueries({ queryKey: ["subprojects"] });
-      await queryClient.invalidateQueries({ queryKey: ["item"] });
-    },
-  });
-
   const deleteCompany = useMutation({
     mutationFn: projectService.deleteCompany,
     onSuccess: async () => queryClient.invalidateQueries({ queryKey: ["companies"] }),
@@ -127,24 +93,6 @@ const PrivateLayout = () => {
   const deleteProject = useMutation({
     mutationFn: projectService.deleteProject,
     onSuccess: async () => queryClient.invalidateQueries({ queryKey: ["projects"] }),
-  });
-
-  const deleteSubproject = useMutation({
-    mutationFn: projectService.deleteSubproject,
-    onSuccess: async () => queryClient.invalidateQueries({ queryKey: ["subprojects"] }),
-  });
-
-  const deleteStage = useMutation({
-    mutationFn: projectService.deleteStage,
-    onSuccess: async () => queryClient.invalidateQueries({ queryKey: ["subprojects"] }),
-  });
-
-  const deleteItem = useMutation({
-    mutationFn: projectService.deleteItem,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["subprojects"] });
-      await queryClient.invalidateQueries({ queryKey: ["item"] });
-    },
   });
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -172,30 +120,6 @@ const PrivateLayout = () => {
         }}
         onDeleteProject={(id) => {
           if (confirm("Excluir este projeto?")) deleteProject.mutate(id);
-        }}
-        onEditSubproject={(s) => {
-          setName(s.name);
-          setEditingId(s.id);
-          setOpenSubproject(true);
-        }}
-        onDeleteSubproject={(id) => {
-          if (confirm("Excluir este subprojeto?")) deleteSubproject.mutate(id);
-        }}
-        onEditStage={(s) => {
-          setName(s.name);
-          setEditingId(s.id);
-          setOpenStage(true);
-        }}
-        onDeleteStage={(id) => {
-          if (confirm("Excluir esta etapa?")) deleteStage.mutate(id);
-        }}
-        onEditItem={(i) => {
-          setName(i.name);
-          setEditingId(i.id);
-          setOpenItem(true);
-        }}
-        onDeleteItem={(id) => {
-          if (confirm("Excluir este item?")) deleteItem.mutate(id);
         }}
       />
       </div>
@@ -226,27 +150,6 @@ const PrivateLayout = () => {
         <div className="space-y-4">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do projeto" />
           <Button className="w-full" onClick={() => createProject.mutate()} disabled={!name}>Salvar</Button>
-        </div>
-      </Modal>
-
-      <Modal open={openSubproject} title="Editar Subprojeto" onClose={() => setOpenSubproject(false)}>
-        <div className="space-y-4">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do subprojeto" />
-          <Button className="w-full" onClick={() => createSubproject.mutate()} disabled={!name}>Salvar</Button>
-        </div>
-      </Modal>
-
-      <Modal open={openStage} title="Editar Etapa" onClose={() => setOpenStage(false)}>
-        <div className="space-y-4">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome da etapa" />
-          <Button className="w-full" onClick={() => createStage.mutate()} disabled={!name}>Salvar</Button>
-        </div>
-      </Modal>
-
-      <Modal open={openItem} title="Editar Item" onClose={() => setOpenItem(false)}>
-        <div className="space-y-4">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do item" />
-          <Button className="w-full" onClick={() => createItem.mutate()} disabled={!name}>Salvar</Button>
         </div>
       </Modal>
     </div>
