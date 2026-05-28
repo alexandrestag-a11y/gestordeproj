@@ -157,23 +157,23 @@ export default function Dashboard() {
         search={search}
         onSearch={setSearch}
       />
-      <div className="space-y-6 p-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className="space-y-6 p-4 md:p-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
             <CompanyFilter companies={companies} value={companyId} onChange={(val) => {
               setCompanyId(val);
               setActiveFolderId(null);
             }} />
 
-            <div className="flex gap-1">
-              <Button className="bg-slate-200 text-slate-800 hover:bg-slate-300" onClick={() => {
+            <div className="flex items-center gap-1">
+              <Button className="bg-slate-200 text-slate-800 hover:bg-slate-300 px-3 whitespace-nowrap" onClick={() => {
                 setEditMode("company");
                 setOpenCompany(true);
               }}>
                 Nova Empresa
               </Button>
               {companyId && (
-                <>
+                <div className="flex">
                   <button
                     className="p-2 text-slate-400 hover:text-blue-600"
                     onClick={() => {
@@ -198,12 +198,12 @@ export default function Dashboard() {
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
-                </>
+                </div>
               )}
             </div>
 
             {companyId && (
-              <Button className="bg-slate-200 text-slate-800 hover:bg-slate-300" onClick={() => {
+              <Button className="bg-slate-200 text-slate-800 hover:bg-slate-300 px-3 whitespace-nowrap" onClick={() => {
                 setEditMode("folder");
                 setOpenFolder(true);
               }}>
@@ -211,8 +211,8 @@ export default function Dashboard() {
               </Button>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="mr-2 flex items-center rounded-xl bg-slate-100 p-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center rounded-xl bg-slate-100 p-1">
               <button
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                   viewMode === "grid" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
@@ -230,25 +230,25 @@ export default function Dashboard() {
                 Arvore
               </button>
             </div>
-            <Button onClick={() => setOpen(true)} disabled={!companyId}>
+            <Button onClick={() => setOpen(true)} disabled={!companyId} className="whitespace-nowrap">
               Novo Projeto
             </Button>
           </div>
         </div>
 
         {companyId && viewMode === "grid" && (
-          <div className="flex items-center gap-2 text-sm text-slate-500">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 text-sm text-slate-500 scrollbar-hide">
             <button
-              className="hover:text-blue-600"
+              className="hover:text-blue-600 whitespace-nowrap"
               onClick={() => setActiveFolderId(null)}
             >
               Raiz
             </button>
             {breadcrumbs.map(folder => (
-              <div key={folder.id} className="flex items-center gap-2">
+              <div key={folder.id} className="flex items-center gap-2 shrink-0">
                 <ChevronRight className="h-4 w-4" />
                 <button
-                  className="hover:text-blue-600"
+                  className="hover:text-blue-600 whitespace-nowrap"
                   onClick={() => setActiveFolderId(folder.id)}
                 >
                   {folder.name}
@@ -258,9 +258,9 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className={viewMode === "grid" ? "grid grid-cols-3 gap-5" : "space-y-4"}>
+        <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" : "space-y-4"}>
           {viewMode === "tree" ? (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 md:p-6 shadow-sm overflow-x-auto">
               <div className="mb-6 flex items-center gap-2 text-slate-900">
                 <ListTree className="h-5 w-5 text-blue-600" />
                 <h3 className="font-semibold">Estrutura de Pastas e Projetos</h3>
@@ -309,7 +309,7 @@ export default function Dashboard() {
           ))}
 
           {isLoading
-            ? Array.from({ length: 6 }).map((_, index) => (
+            ? Array.from({ length: 3 }).map((_, index) => (
                 <div key={index} className="h-48 animate-pulse rounded-2xl bg-white/70" />
               ))
             : filteredProjects.map((project) => (
