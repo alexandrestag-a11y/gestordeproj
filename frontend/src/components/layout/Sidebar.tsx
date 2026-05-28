@@ -1,18 +1,23 @@
-import { Building2, ChevronDown, ChevronRight, Folder as FolderIcon, FolderKanban, LayoutDashboard, LogOut, Users, Plus, FileText, CheckSquare } from "lucide-react";
+import { Building2, ChevronDown, ChevronRight, Folder as FolderIcon, FolderKanban, LayoutDashboard, LogOut, Users, Plus, FileText, CheckSquare, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import type { Company, Folder, Project, Subproject, Stage, Item } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 import { useFolders, useProjects, useSubprojects } from "../../hooks/useProjects";
 
-const ProjectTreeItem = ({ project, level = 0 }: { project: Project, level?: number }) => {
+const ProjectTreeItem = ({ project, level = 0, onEdit, onDelete }: {
+  project: Project,
+  level?: number,
+  onEdit?: (p: Project) => void,
+  onDelete?: (id: string) => void
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const { data: subprojects = [] } = useSubprojects(isOpen ? project.id : undefined);
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 group/item">
       <div
-        className="flex w-full items-center gap-2 rounded-xl py-2 pr-3 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white cursor-pointer"
+        className="flex w-full items-center gap-2 rounded-xl py-2 pr-3 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white cursor-pointer relative"
         style={{ paddingLeft: `${(level + 1) * 0.75 + 0.75}rem` }}
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -27,6 +32,26 @@ const ProjectTreeItem = ({ project, level = 0 }: { project: Project, level?: num
         >
           {project.name}
         </Link>
+        <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition ml-2">
+          <button
+            className="p-1 hover:text-blue-400"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit?.(project);
+            }}
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+          <button
+            className="p-1 hover:text-red-400"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(project.id);
+            }}
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        </div>
       </div>
 
       {isOpen && (
@@ -110,28 +135,56 @@ const FolderItem = ({
   folder,
   allFolders,
   allProjects,
-  level = 0
+  level = 0,
+  onEditFolder,
+  onDeleteFolder,
+  onEditProject,
+  onDeleteProject,
 }: {
   folder: Folder;
   allFolders: Folder[];
   allProjects: Project[];
   level?: number;
+  onEditFolder?: (f: Folder) => void;
+  onDeleteFolder?: (id: string) => void;
+  onEditProject?: (p: Project) => void;
+  onDeleteProject?: (id: string) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const subfolders = allFolders.filter(f => f.parentId === folder.id);
   const projects = allProjects.filter(p => p.folderId === folder.id);
 
   return (
-    <div className="space-y-1">
-      <button
+    <div className="space-y-1 group/folder">
+      <div
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white"
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white cursor-pointer"
         style={{ paddingLeft: `${(level + 1) * 0.75 + 0.75}rem` }}
       >
         {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         <FolderIcon className="h-4 w-4 text-blue-400/60" />
-        <span className="truncate">{folder.name}</span>
-      </button>
+        <span className="truncate flex-1">{folder.name}</span>
+        <div className="flex gap-1 opacity-0 group-hover/folder:opacity-100 transition ml-2">
+          <button
+            className="p-1 hover:text-blue-400"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditFolder?.(folder);
+            }}
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+          <button
+            className="p-1 hover:text-red-400"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteFolder?.(folder.id);
+            }}
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
 
       {isOpen && (
         <div className="space-y-1">
@@ -142,10 +195,20 @@ const FolderItem = ({
               allFolders={allFolders}
               allProjects={allProjects}
               level={level + 1}
+              onEditFolder={onEditFolder}
+              onDeleteFolder={onDeleteFolder}
+              onEditProject={onEditProject}
+              onDeleteProject={onDeleteProject}
             />
           ))}
           {projects.map(project => (
-            <ProjectTreeItem key={project.id} project={project} level={level + 1} />
+            <ProjectTreeItem
+              key={project.id}
+              project={project}
+              level={level + 1}
+              onEdit={onEditProject}
+              onDelete={onDeleteProject}
+            />
           ))}
         </div>
       )}
@@ -156,9 +219,17 @@ const FolderItem = ({
 export const Sidebar = ({
   companies,
   activeCompanyId,
+  onEditFolder,
+  onDeleteFolder,
+  onEditProject,
+  onDeleteProject,
 }: {
   companies: Company[];
   activeCompanyId?: string;
+  onEditFolder?: (f: Folder) => void;
+  onDeleteFolder?: (id: string) => void;
+  onEditProject?: (p: Project) => void;
+  onDeleteProject?: (id: string) => void;
 }) => {
   const { user, logout } = useAuth();
   const { data: folders = [] } = useFolders(activeCompanyId);
@@ -204,10 +275,19 @@ export const Sidebar = ({
                       folder={folder}
                       allFolders={folders}
                       allProjects={projects}
+                      onEditFolder={onEditFolder}
+                      onDeleteFolder={onDeleteFolder}
+                      onEditProject={onEditProject}
+                      onDeleteProject={onDeleteProject}
                     />
                   ))}
                   {rootProjects.map(project => (
-                    <ProjectTreeItem key={project.id} project={project} />
+                    <ProjectTreeItem
+                      key={project.id}
+                      project={project}
+                      onEdit={onEditProject}
+                      onDelete={onDeleteProject}
+                    />
                   ))}
                 </div>
               )}
