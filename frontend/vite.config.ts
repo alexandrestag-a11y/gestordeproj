@@ -6,4 +6,16 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom", "@tanstack/react-query"],
+          ui: ["lucide-react", "sonner", "clsx"],
+          editor: ["react-quill"]
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
 });
