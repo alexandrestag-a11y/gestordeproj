@@ -115,14 +115,14 @@ export default function ItemDetailPage() {
         title={item.name}
         subtitle={`${item.stage?.subproject.project.name} > ${item.stage?.subproject.name} > ${item.stage?.name}`}
       />
-      <div className="grid grid-cols-[1.4fr_0.8fr] gap-6 p-8">
+      <div className="flex flex-col lg:grid lg:grid-cols-[1.4fr_0.8fr] gap-6 p-4 md:p-8">
         <div className="space-y-6">
           <ItemDetailCard item={item} />
           <Card className="space-y-4 p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Campos customizados</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {item.stage?.subproject.project.customFields.map((field) => (
                 <FieldEditor
                   key={field.id}

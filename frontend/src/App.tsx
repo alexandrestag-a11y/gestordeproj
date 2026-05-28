@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { Building2 } from "lucide-react";
 import { Toaster } from "sonner";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Button } from "./components/ui/Button";
@@ -94,10 +95,15 @@ const PrivateLayout = () => {
     onSuccess: async () => queryClient.invalidateQueries({ queryKey: ["projects"] }),
   });
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <div className="flex min-h-screen">
-      <Sidebar
-        companies={companies}
+    <div className="flex min-h-screen overflow-hidden">
+      <div className={`fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm transition-opacity lg:hidden ${isSidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setIsSidebarOpen(false)} />
+
+      <div className={`fixed inset-y-0 left-0 z-50 w-80 transform transition-transform lg:relative lg:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <Sidebar
+          companies={companies}
         activeCompanyId={activeCompanyId || companies[0]?.id}
         onEditFolder={(f) => {
           setName(f.name);
@@ -116,8 +122,21 @@ const PrivateLayout = () => {
           if (confirm("Excluir este projeto?")) deleteProject.mutate(id);
         }}
       />
-      <main className="flex-1 overflow-hidden">
-        <Outlet />
+      </div>
+
+      <main className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex items-center border-b border-slate-200 bg-white px-4 py-2 lg:hidden">
+          <button
+            className="p-2 text-slate-600 hover:text-slate-900"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <Building2 className="h-6 w-6" />
+          </button>
+          <span className="ml-2 font-semibold text-slate-900">Orbit Hub</span>
+        </div>
+        <div className="flex-1 overflow-auto">
+          <Outlet />
+        </div>
       </main>
 
       <Modal open={openFolder} title={editingId ? "Editar Pasta" : "Nova Pasta"} onClose={() => setOpenFolder(false)}>

@@ -153,14 +153,16 @@ export default function ProjectView() {
   return (
     <PageWrapper>
       <Header title={project?.name || "Projeto"} subtitle={project?.description || "Visao kanban por subprojeto"} />
-      <div className="flex h-[calc(100vh-121px)]">
-        <SubprojectPanel
-          subprojects={subprojects}
-          activeId={activeSubproject?.id}
-          onSelect={setActiveSubprojectId}
-          onCreate={() => setOpenSubprojectModal(true)}
-        />
-        <div className="flex-1 overflow-auto p-6">
+      <div className="flex flex-col lg:flex-row h-full overflow-hidden">
+        <div className="flex lg:flex-col border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50/30 overflow-x-auto lg:overflow-y-auto shrink-0">
+          <SubprojectPanel
+            subprojects={subprojects}
+            activeId={activeSubproject?.id}
+            onSelect={setActiveSubprojectId}
+            onCreate={() => setOpenSubprojectModal(true)}
+          />
+        </div>
+        <div className="flex-1 overflow-auto p-4 md:p-6">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold text-slate-900">{activeSubproject?.name || "Sem subprojeto"}</h2>

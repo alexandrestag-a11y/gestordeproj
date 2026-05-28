@@ -239,7 +239,7 @@ export const Sidebar = ({
   const rootProjects = projects.filter(p => !p.folderId);
 
   return (
-    <aside className="flex w-80 flex-col bg-slate-950 px-5 py-6 text-slate-100">
+    <aside className="flex h-full w-80 flex-col bg-slate-950 px-5 py-6 text-slate-100 overflow-y-auto">
       <Link to="/" className="mb-8 block rounded-3xl bg-white/5 px-4 py-4">
         <div className="text-xs uppercase tracking-[0.24em] text-blue-200">Orbit</div>
         <div className="mt-2 text-xl font-semibold">Project Control Hub</div>
